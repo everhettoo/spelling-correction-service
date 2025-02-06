@@ -1,13 +1,20 @@
+
 from fastapi import FastAPI
+
+import spelling_checker
+from schemas import ReviewResponse
+import uvicorn
 
 app = FastAPI()
 
+@app.get("/review/")
+async def review_text(text: str):
+    tokens = text.split(' ')
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+    res = ReviewResponse(text=text, tokens=tokens)
+    res.process()
+    return res
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
+if __name__ == "__main__":
+    uvicorn.run(app, host="localhost", port=8000)
