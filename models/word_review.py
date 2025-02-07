@@ -1,3 +1,4 @@
+# This class holds each token and the autocorrected words.
 from models.types import WordType
 
 

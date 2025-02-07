@@ -1,3 +1,6 @@
+# This class acts as a message container - receive input text for processing. Once, the input was
+# processed, it stores the processed tokens and corrected word in memory for responding.
+
 from models.types import WordType
 from models.word_review import WordReview
 from pipeline import text_preprocessor
@@ -22,6 +25,7 @@ class TextPayload:
             self.error_msg = str(e)
 
     def review(self):
+        # TODO: Dummy method need to be revised!
         for word in self.tokens:
             word = WordReview(word)
             word.word_type = WordType.UNDEFINED
