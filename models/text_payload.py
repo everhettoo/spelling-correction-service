@@ -15,6 +15,13 @@ class TextPayload:
         self.token_count = -1
         self.reviewed_words = []
 
+    def detect_language_is_english(self):
+        try:
+            self.tokens = text_preprocessor.detect_language_when_english(self.text)
+        except Exception as e:
+            self.error = True
+            self.error_msg = str(e)
+
     def tokenize_words(self):
         try:
             # Calls the pipeline for processing the input text.

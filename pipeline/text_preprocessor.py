@@ -3,6 +3,17 @@
 # 2. word tokenization (word segmentation)
 
 from nltk.tokenize import word_tokenize
+import chardet
+
+
+def detect_language_when_english(text):
+    # TODO: To implement the logic.
+    input_text = text.encode()
+    result = chardet.detect(input_text)['encoding']
+    if result == 'ascii':
+        return True
+    else:
+        return False
 
 
 def tokenize_words(text: str):

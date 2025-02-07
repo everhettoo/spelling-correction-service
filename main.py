@@ -1,3 +1,5 @@
+# The simple rest endpoint /review/?text=data is implemented here, in the main file.
+# Please refer to 'tests/test_main.py to understand how the endpoint is consumed.
 from fastapi import FastAPI, status
 
 from models.text_payload import TextPayload
@@ -8,10 +10,14 @@ app = FastAPI()
 
 @app.get("/review/")
 async def review_text(text: str):
-    # Create payload for process pipelines.
+    # Create and initialize payload container for text process pipelines.
     payload = TextPayload(text)
 
-    # Detect character encoding and language. Returns tokens if the language is English.
+    payload.detect_language_is_english()
+    if payload.error:
+        return format_error(payload)
+
+    # Returns tokens if the language is English.
     payload.tokenize_words()
     if payload.error:
         return format_error(payload)
