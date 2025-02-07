@@ -1,16 +1,12 @@
-from enum import Enum
+from models.types import WordType
 
-
-class WordType(Enum):
-    WORD = 1
-    NON_WORD = 2
-    OTHER = 3
 
 class ReviewWord:
     def __init__(self, text):
         self.source = text
         self.word_type = WordType.OTHER
         self.suggestions = dict()
+
 
 class ReviewResponse:
     def __init__(self, text, tokens):
@@ -26,5 +22,3 @@ class ReviewResponse:
             word.suggestions[1] = "asa1"
             word.suggestions[2] = "asa2"
             self.review_words.append(word)
-
-

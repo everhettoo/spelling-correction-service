@@ -1,19 +1,34 @@
+import json
 
-from fastapi import FastAPI
+from fastapi import FastAPI, status, HTTPException
+from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 
-import spelling_checker
-from schemas import ReviewResponse
+from models.text_payload import TextPayload
 import uvicorn
 
 app = FastAPI()
 
+
 @app.get("/review/")
 async def review_text(text: str):
-    tokens = text.split(' ')
+    # Create payload for process pipelines.
+    payload = TextPayload(text)
 
-    res = ReviewResponse(text=text, tokens=tokens)
-    res.process()
-    return res
+    payload.tokenize_words()
+
+    # Detect character encoding and language. Returns tokens if the language is English.
+    if payload.get_error():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=payload.get_error_msg()
+        )
+    else:
+        return JSONResponse(
+            status_code=status.HTTP_200_OK,
+            content=jsonable_encoder(payload)
+
+        )
 
 
 if __name__ == "__main__":
