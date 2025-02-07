@@ -1,3 +1,5 @@
+from models.types import WordType
+from models.word_review import WordReview
 from pipeline import text_preprocessor
 
 
@@ -8,6 +10,7 @@ class TextPayload:
         self.error_msg = None
         self.tokens = None
         self.token_count = -1
+        self.reviewed_words = []
 
     def tokenize_words(self):
         try:
@@ -17,3 +20,11 @@ class TextPayload:
         except Exception as e:
             self.error = True
             self.error_msg = str(e)
+
+    def review(self):
+        for word in self.tokens:
+            word = WordReview(word)
+            word.word_type = WordType.UNDEFINED
+            word.suggestions[1] = "asa1"
+            word.suggestions[2] = "asa2"
+            self.reviewed_words.append(word)

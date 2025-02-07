@@ -1,2 +1,2 @@
 # Test your FastAPI endpoints
-GET http://localhost:8000/review/?text=bart is a good boy actually.
+GET http://localhost:8000/review/?text=bart is a good boy actually, don't you know?
