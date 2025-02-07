@@ -1,5 +1,2 @@
 # Test your FastAPI endpoints
-GET http://127.0.0.1:8000/review/?text=yoda work well
-Accept: application/json
-
-###
+GET http://localhost:8000/review/?text=bart is a good boy actually.

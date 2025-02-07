@@ -1,8 +1,4 @@
-import json
-
-from fastapi import FastAPI, status, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.encoders import jsonable_encoder
+from fastapi import FastAPI, status
 
 from models.text_payload import TextPayload
 import uvicorn
@@ -15,20 +11,13 @@ async def review_text(text: str):
     # Create payload for process pipelines.
     payload = TextPayload(text)
 
+    # Detect character encoding and language. Returns tokens if the language is English.
     payload.tokenize_words()
 
-    # Detect character encoding and language. Returns tokens if the language is English.
-    if payload.get_error():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=payload.get_error_msg()
-        )
+    if payload.error:
+        return {"status": status.HTTP_400_BAD_REQUEST, "payload": payload.error_msg}
     else:
-        return JSONResponse(
-            status_code=status.HTTP_200_OK,
-            content=jsonable_encoder(payload)
-
-        )
+        return {"status": status.HTTP_200_OK, "payload": payload}
 
 
 if __name__ == "__main__":
