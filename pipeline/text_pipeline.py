@@ -20,7 +20,8 @@ class TextPipeline:
         self.err = False
         self.err_msg = ''
         self.stop_words = set(stopwords.words('english'))
-        self.corpus = set([item for item in words.words() if item not in stopwords.words('english')])
+        # words.fileids() --> ['en', 'en-basic']
+        self.corpus = set([item for item in words.words('en-basic') if item not in stopwords.words('english')])
 
     def execute_asc_pipeline(self, doc: Document):
         try:

@@ -7,7 +7,16 @@
           {
             "tokens": [
               {
-                "source": "This",
+                "source": "Bart",
+                "word_type": -1,
+                "suggestions": {
+                  "0": "cart",
+                  "1": "art",
+                  "2": "part"
+                }
+              },
+              {
+                "source": "is",
                 "word_type": 4,
                 "suggestions": {}
               },
@@ -17,43 +26,24 @@
                 "suggestions": {}
               },
               {
-                "source": "sampel",
+                "source": "good",
+                "word_type": 1,
+                "suggestions": {}
+              },
+              {
+                "source": "bay",
                 "word_type": -1,
                 "suggestions": {
-                  "0": "samel",
-                  "1": "sammel",
-                  "2": "samiel"
+                  "0": "boy",
+                  "1": "way",
+                  "2": "say",
+                  "3": "baby",
+                  "4": "ray",
+                  "5": "bag",
+                  "6": "bad",
+                  "7": "may",
+                  "8": "day"
                 }
-              },
-              {
-                "source": "corpus",
-                "word_type": 1,
-                "suggestions": {}
-              },
-              {
-                "source": "starting",
-                "word_type": 1,
-                "suggestions": {}
-              },
-              {
-                "source": "with",
-                "word_type": 4,
-                "suggestions": {}
-              },
-              {
-                "source": "sen-1",
-                "word_type": -1,
-                "suggestions": {}
-              },
-              {
-                "source": "in",
-                "word_type": 4,
-                "suggestions": {}
-              },
-              {
-                "source": "para-1",
-                "word_type": -1,
-                "suggestions": {}
               },
               {
                 "source": ".",
@@ -65,9 +55,16 @@
           {
             "tokens": [
               {
-                "source": "While",
+                "source": "Some",
                 "word_type": 4,
                 "suggestions": {}
+              },
+              {
+                "source": "timf",
+                "word_type": -1,
+                "suggestions": {
+                  "0": "time"
+                }
               },
               {
                 "source": ",",
@@ -75,19 +72,27 @@
                 "suggestions": {}
               },
               {
-                "source": "this",
+                "source": "he",
                 "word_type": 4,
                 "suggestions": {}
               },
               {
-                "source": "is",
+                "source": "can",
                 "word_type": 4,
                 "suggestions": {}
               },
               {
-                "source": "sen-2",
+                "source": "be",
+                "word_type": 4,
+                "suggestions": {}
+              },
+              {
+                "source": "baf",
                 "word_type": -1,
-                "suggestions": {}
+                "suggestions": {
+                  "0": "bag",
+                  "1": "bad"
+                }
               },
               {
                 "source": ".",
@@ -103,8 +108,8 @@
           {
             "tokens": [
               {
-                "source": "Meanwhile",
-                "word_type": 1,
+                "source": "Otherwise",
+                "word_type": -1,
                 "suggestions": {}
               },
               {
@@ -113,34 +118,7 @@
                 "suggestions": {}
               },
               {
-                "source": "para-2",
-                "word_type": -1,
-                "suggestions": {}
-              },
-              {
-                "source": "has",
-                "word_type": 4,
-                "suggestions": {}
-              },
-              {
-                "source": "one",
-                "word_type": 1,
-                "suggestions": {}
-              },
-              {
-                "source": "sentense",
-                "word_type": -1,
-                "suggestions": {
-                  "0": "sentence"
-                }
-              },
-              {
-                "source": ",",
-                "word_type": 3,
-                "suggestions": {}
-              },
-              {
-                "source": "this",
+                "source": "he",
                 "word_type": 4,
                 "suggestions": {}
               },
@@ -150,12 +128,24 @@
                 "suggestions": {}
               },
               {
-                "source": "sen-3",
+                "source": "always",
                 "word_type": -1,
                 "suggestions": {}
               },
               {
-                "source": ".",
+                "source": "cood",
+                "word_type": -1,
+                "suggestions": {
+                  "0": "cord",
+                  "1": "good",
+                  "2": "wood",
+                  "3": "food",
+                  "4": "cook",
+                  "5": "cold"
+                }
+              },
+              {
+                "source": "!",
                 "word_type": 3,
                 "suggestions": {}
               }

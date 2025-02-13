@@ -75,4 +75,4 @@ class Test(TestCase):
         # Test the private method.
         # {0: 'bellow', 1: 'fellow', 2: 'hallow', 3: 'hello', 4: 'hollow', 5: 'mellow', 6: 'yellow'}
         self.pipeline._TextPipeline__review_words(token)
-        self.assertEqual(len(token.suggestions), 7)
+        self.assertEqual(len(token.suggestions), 2)
