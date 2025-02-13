@@ -6,6 +6,24 @@ from tests import test_data
 
 
 class Test(TestCase):
+    def test_parse(self):
+        doc = Document(test_data.sample_text1)
+        pipeline = text_pipeline.TextPipeline(doc)
+        pipeline.parse_doc()
+
+        # Sample_text1 has 2 paragraphs
+        # paragraph-1 has 2 sentences. Paragraph-2 has a sentence.
+        self.assertEqual(len(doc.paragraphs), 2)
+
+        i = 0
+        for paragraph in doc.paragraphs:
+            if i == 0:
+                self.assertEqual(len(paragraph.sentences), 2)
+            if i == 1:
+                self.assertEqual(len(paragraph.sentences), 1)
+
+            i = i + 1
+
     def test_detect_language_when_english(self):
         doc = Document(test_data.hello_world_en)
         pipeline = text_pipeline.TextPipeline(doc)
@@ -40,7 +58,7 @@ class Test(TestCase):
         actual = pipeline._TextPipeline__detect_language_when_english()
         self.assertFalse(actual)
 
-    def test___review_words(self):
+    def test_review_words(self):
         doc = Document(test_data.hello_world_en +
                        test_data.hello_world_rs +
                        test_data.hello_world_rs)

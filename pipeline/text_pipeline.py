@@ -1,12 +1,14 @@
 # This module handles:
 # 1. language encoding and language detection
 # 2. word tokenization (word segmentation)
-from nltk import ngrams, edit_distance
-from nltk.corpus import words
-from nltk.tokenize import word_tokenize
 import chardet
+from nltk import edit_distance
+from nltk.tokenize import word_tokenize, sent_tokenize
 
 from models.document import Document
+from models.paragraph import Paragraph
+from models.sentence import Sentence
+from models.token import Token
 
 
 class TextPipeline:
@@ -14,18 +16,37 @@ class TextPipeline:
         self.err = False
         self.err_msg = ''
         self.doc = doc
-        # TODO: Need to remove or replace with custom corpus.
-        self.correct_words = words.words()
 
     def execute_asc_pipeline(self):
         try:
             # self.__detect_language_when_english()
-            self.doc.parse_doc()
+            self.parse_doc()
         except Exception as e:
             self.err = True
             self.err_msg = str(e)
         finally:
             self.doc.input_text = ''
+
+    def parse_doc(self):
+        self.doc.paragraphs = []
+        paragraph_list = self.doc.input_text.split("\r\n")
+        for p in paragraph_list:
+            # Process paragraph
+            paragraph = Paragraph()
+            sentence_list = sent_tokenize(p)
+            for s in sentence_list:
+                # Process sentence
+                sentence = Sentence()
+                word_list = word_tokenize(s)
+                for word in word_list:
+                    # Process token
+                    sentence.tokens.append(Token(word))
+
+                # Add processed sentence (+tokens) into a new paragraph.
+                paragraph.sentences.append(sentence)
+
+            # Add the new paragraph into document.
+            self.doc.paragraphs.append(paragraph)
 
     #
     # def review(self):
