@@ -12,24 +12,24 @@ from models.token import Token
 
 
 class TextPipeline:
-    def __init__(self, doc: Document):
+    def __init__(self, corpus: list[str]):
         self.err = False
         self.err_msg = ''
-        self.doc = doc
+        self.corpus = corpus
 
-    def execute_asc_pipeline(self):
+    def execute_asc_pipeline(self, doc: Document):
         try:
             # self.__detect_language_when_english()
-            self.parse_doc()
+            self.parse_doc(doc)
         except Exception as e:
             self.err = True
             self.err_msg = str(e)
         finally:
-            self.doc.input_text = ''
+            doc.input_text = ''
 
-    def parse_doc(self):
-        self.doc.paragraphs = []
-        paragraph_list = self.doc.input_text.split("\r\n")
+    def parse_doc(self, doc: Document):
+        doc.paragraphs = []
+        paragraph_list = doc.input_text.split("\r\n")
         for p in paragraph_list:
             # Process paragraph
             paragraph = Paragraph()
@@ -46,7 +46,7 @@ class TextPipeline:
                 paragraph.sentences.append(sentence)
 
             # Add the new paragraph into document.
-            self.doc.paragraphs.append(paragraph)
+            doc.paragraphs.append(paragraph)
 
     #
     # def review(self):
@@ -65,23 +65,23 @@ class TextPipeline:
     #
     #         self.article.append(word)
 
-    def __detect_language_when_english(self):
+    def __detect_language_when_english(self, doc: Document):
         # TODO: To implement the logic.
-        input_text = self.doc.input_text.encode()
+        input_text = doc.input_text.encode()
         result = chardet.detect(input_text)['encoding']
         if result == 'ascii':
             return True
         else:
             return False
 
-    def __tokenize_words(self):
+    def __tokenize_words(self, doc: Document):
         """
         This method tokenizes the text and returns tokens when no error occurs.
         :param: the input string.
         :return: list of strings as tokens.
         """
         try:
-            tokens = word_tokenize(self.doc.input_text)
+            tokens = word_tokenize(doc.input_text)
             # TODO: Need more careful handling where lib misses few words like bart's. Custom expression??
 
             return tokens
@@ -104,8 +104,9 @@ class TextPipeline:
         # print(sorted(temp, key=lambda val: val[0])[0][1])
 
         suggestion = []
-        for w in self.correct_words:
+        for w in self.corpus:
             if w == token:
+                suggestion = []
                 break
             else:
                 m = edit_distance(token, w)
