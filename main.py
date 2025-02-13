@@ -1,39 +1,25 @@
 # The simple rest endpoint /review/?text=data is implemented here, in the main file.
 # Please refer to 'tests/test_main.py to understand how the endpoint is consumed.
-from fastapi import FastAPI, status
-
-from models.text_payload import TextPayload
 import uvicorn
+from fastapi import FastAPI, status, HTTPException
+
+from models.document import Document
+from pipeline.text_pipeline import TextPipeline
 
 app = FastAPI()
 
 
-@app.get("/review/")
-async def review_text(text: str):
+@app.get("/review")
+async def review_text(input_text: str):
     # Create and initialize payload container for text process pipelines.
-    payload = TextPayload(text)
+    doc = Document(input_text)
+    processor = TextPipeline(doc)
+    processor.execute_asc_pipeline()
 
-    payload.detect_language_is_english()
-    if payload.error:
-        return format_error(payload)
+    if processor.err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=processor.err_msg)
 
-    # Returns tokens if the language is English.
-    payload.tokenize_words()
-    if payload.error:
-        return format_error(payload)
-
-    payload.review()
-    if payload.error:
-        return format_error(payload)
-
-    payload.text = ""
-    return {"status": status.HTTP_200_OK, "payload": payload}
-
-
-def format_error(payload: TextPayload):
-    # Chop original text for payload size.
-    payload.text = ""
-    return {"status": status.HTTP_400_BAD_REQUEST, "payload": payload.error_msg}
+    return {"doc": doc}
 
 
 if __name__ == "__main__":

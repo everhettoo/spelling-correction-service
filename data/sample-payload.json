@@ -1,0 +1,163 @@
+{
+  "status": 200,
+  "doc": {
+    "input_text": "This a sample corpus starting with sen-1 in para-1. While, this is sen-2.\r\nMeanwhile, para-2 has one sen, this is sen-3.",
+    "paragraphs": [
+      {
+        "sentences": [
+          {
+            "tokens": [
+              {
+                "source": "This",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "a",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "sample",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "corpus",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "starting",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "with",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "sen-1",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "in",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "para-1",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": ".",
+                "word_type": -1,
+                "suggestions": {}
+              }
+            ]
+          },
+          {
+            "tokens": [
+              {
+                "source": "While",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": ",",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "this",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "is",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "sen-2",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": ".",
+                "word_type": -1,
+                "suggestions": {}
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "sentences": [
+          {
+            "tokens": [
+              {
+                "source": "Meanwhile",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": ",",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "para-2",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "has",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "one",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "sen",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": ",",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "this",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "is",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": "sen-3",
+                "word_type": -1,
+                "suggestions": {}
+              },
+              {
+                "source": ".",
+                "word_type": -1,
+                "suggestions": {}
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
