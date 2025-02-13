@@ -1,4 +1,4 @@
 ###
 # Test your FastAPI endpoints
 GET http://localhost:8000/review?
-    input_text=This a sample corpus starting with sen-1 in para-1. While, this is sen-2.%0D%0AMeanwhile, para-2 has one sen, this is sen-3.
+    input_text=This a sampel corpus starting with sen-1 in para-1. While, this is sen-2.%0D%0AMeanwhile, para-2 has one sentense, this is sen-3.

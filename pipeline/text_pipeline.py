@@ -1,21 +1,26 @@
 # This module handles:
 # 1. language encoding and language detection
 # 2. word tokenization (word segmentation)
+import string
+
 import chardet
 from nltk import edit_distance
+from nltk.corpus import stopwords, words
 from nltk.tokenize import word_tokenize, sent_tokenize
 
 from models.document import Document
 from models.paragraph import Paragraph
 from models.sentence import Sentence
 from models.token import Token
+from models.types import WordType
 
 
 class TextPipeline:
-    def __init__(self, corpus: list[str]):
+    def __init__(self):
         self.err = False
         self.err_msg = ''
-        self.corpus = corpus
+        self.stop_words = set(stopwords.words('english'))
+        self.corpus = set([item for item in words.words() if item not in stopwords.words('english')])
 
     def execute_asc_pipeline(self, doc: Document):
         try:
@@ -40,30 +45,15 @@ class TextPipeline:
                 word_list = word_tokenize(s)
                 for word in word_list:
                     # Process token
-                    sentence.tokens.append(Token(word))
+                    token = Token(word)
+                    self.__review_words(token)
+                    sentence.tokens.append(token)
 
                 # Add processed sentence (+tokens) into a new paragraph.
                 paragraph.sentences.append(sentence)
 
             # Add the new paragraph into document.
             doc.paragraphs.append(paragraph)
-
-    #
-    # def review(self):
-    #     # TODO: Dummy method need to be revised!
-    #     i = 0
-    #     for word in self.tokens:
-    #         i = i + 1
-    #         word = Token(word)
-    #         word.word_type = WordType.WORD
-    #
-    #         if i % 2 == 0:
-    #             word.suggestions[1] = "asa1"
-    #             word.suggestions[2] = "asa2"
-    #             self.article.append(word)
-    #             continue
-    #
-    #         self.article.append(word)
 
     def __detect_language_when_english(self, doc: Document):
         # TODO: To implement the logic.
@@ -88,27 +78,26 @@ class TextPipeline:
         except Exception as e:
             raise e
 
-    def __review_words(self, token: str):
-        m = edit_distance('help', 'helping')
-        print(m)
-        # list of incorrect spellings
-        # that need to be corrected
-        # incorrect_words = ['happpy', 'azmaing', 'intelliengt']
-        # incorrect_words = ['hellow']
+    def __review_words(self, token: Token):
+        token.suggestions = dict()
 
-        # loop for finding correct spellings
-        # based on edit distance and
-        # printing the correct words
-        # for word in token:
-        # temp = [(edit_distance(token, w), w) for w in self.correct_words if w[0] == token]
-        # print(sorted(temp, key=lambda val: val[0])[0][1])
+        if token.source in string.punctuation:
+            token.word_type = WordType.PUNCTUATION
+            return
+        if token.source.lower() in self.stop_words:
+            token.word_type = WordType.STOP_WORD
+            return
+        if token.source.lower() in self.corpus:
+            token.word_type = WordType.WORD
+            return
 
-        suggestion = []
+        i = 0
         for w in self.corpus:
-            if w == token:
-                suggestion = []
-                break
-            else:
-                m = edit_distance(token, w)
-                if m == 1:
-                    suggestion.append(w)
+            # TODO: Not sure why same word repeats twice.
+            if w in token.suggestions.values():
+                continue
+
+            m = edit_distance(token.source.lower(), w)
+            if m == 1:
+                token.suggestions[i] = w
+                i = i + 1

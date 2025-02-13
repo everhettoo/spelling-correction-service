@@ -7,3 +7,5 @@ class WordType(Enum):
     UNDEFINED = -1
     WORD = 1
     NON_WORD = 2
+    PUNCTUATION = 3
+    STOP_WORD = 4

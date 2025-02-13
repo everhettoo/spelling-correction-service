@@ -2,7 +2,6 @@
 # Please refer to 'tests/test_main.py' to understand how the endpoint is consumed.
 import uvicorn
 from fastapi import FastAPI, status, HTTPException
-from nltk.corpus import words
 
 from models.document import Document
 from pipeline.text_pipeline import TextPipeline
@@ -14,7 +13,7 @@ app = FastAPI()
 async def review_text(input_text: str):
     # Create and initialize payload container for text process pipelines.
     doc = Document(input_text)
-    processor = TextPipeline(words.words())
+    processor = TextPipeline()
     processor.execute_asc_pipeline(doc)
 
     if processor.err:
