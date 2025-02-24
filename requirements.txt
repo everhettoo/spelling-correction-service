@@ -3,3 +3,8 @@ uvicorn
 pydantic
 nltk
 chardet
+pandas
+jupyter
+ipykernel
+wordcloud
+matplotlib
