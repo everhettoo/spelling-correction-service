@@ -18,10 +18,12 @@ class Configuration:
 
         # Corpus
         corpus_name = config.get('Corpus', 'name')
+        corpus_medical = config.get('Corpus', 'medical')
 
         # Return a dictionary with the retrieved values
         self.config_values = {
             'app_name': app_name,
             'app_data': app_data,
             'corpus_name': corpus_name,
+            'corpus_medical': corpus_medical
         }
