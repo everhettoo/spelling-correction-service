@@ -2,17 +2,29 @@
 # Please refer to 'tests/test_main.py' to understand how the endpoint is consumed.
 import uvicorn
 from fastapi import FastAPI, status, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from models.document import Document
 from pipeline.text_pipeline import TextPipeline
 
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allow only this frontend
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
 
-@app.get("/review")
-async def review_text(input_text: str):
+class InputText(BaseModel):
+    input_text: str
+
+@app.post("/review")
+async def review_text(data: InputText):
     # Create and initialize payload container for text process pipelines.
-    doc = Document(input_text)
+    doc = Document(data.input_text)
     processor = TextPipeline()
     processor.execute_asc_pipeline(doc)
 
