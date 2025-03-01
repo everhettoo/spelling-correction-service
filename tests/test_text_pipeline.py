@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from app_config import Configuration
 from models.document import Document
 from models.token import Token
 from pipeline import text_pipeline
@@ -9,7 +10,8 @@ from tests import test_data
 class Test(TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.pipeline = text_pipeline.TextPipeline()
+        config = Configuration()
+        cls.pipeline = text_pipeline.TextPipeline(config = config)
 
     def test_parse(self):
         doc = Document(test_data.sample_text1)
@@ -69,10 +71,9 @@ class Test(TestCase):
 
     def test_review_words_when_is_non_word(self):
         # Doc is not required, token is sufficient.
-        # suggested: bellow, fellow, hallow, hello, hollow, mellow,yellow,hollow
+        # suggested: yellow, hollow, hello
         token = Token('hellow')
 
         # Test the private method.
-        # {0: 'bellow', 1: 'fellow', 2: 'hallow', 3: 'hello', 4: 'hollow', 5: 'mellow', 6: 'yellow'}
         self.pipeline._TextPipeline__review_words(token)
-        self.assertEqual(len(token.suggestions), 2)
+        self.assertEqual(len(token.suggestions), 3)

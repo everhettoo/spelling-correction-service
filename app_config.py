@@ -17,13 +17,15 @@ class Configuration:
         app_data = config.get('App', 'data')
 
         # Corpus
-        corpus_name = config.get('Corpus', 'name')
-        corpus_medical = config.get('Corpus', 'medical')
+        corpus_name = config.get('Corpus-Med', 'name')
+        corpus_medical_dir = config.get('Corpus-Med', 'medical_dir')
+        corpus_medical_name = config.get('Corpus-Med', 'medical_name')
 
         # Return a dictionary with the retrieved values
         self.config_values = {
             'app_name': app_name,
             'app_data': app_data,
             'corpus_name': corpus_name,
-            'corpus_medical': corpus_medical
+            'corpus_medical_dir': corpus_medical_dir,
+            'corpus_medical_name': corpus_medical_name
         }
