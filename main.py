@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from models.document import Document
 from pipeline.text_pipeline import TextPipeline
+from pipeline.ngram_pipeline import NgramPipeline
 
 app = FastAPI()
 
@@ -28,10 +29,27 @@ async def review_text(data: InputText):
     processor = TextPipeline()
     processor.execute_asc_pipeline(doc)
 
+    ngramProcessor = NgramPipeline(3)
+    doc = ngramProcessor.check_sentence(doc)
+
     if processor.err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=processor.err_msg)
 
     return {"doc": doc}
+
+@app.post("/ngram")
+async def build_ngram(data: InputText):
+    models = {
+        "bigram": 2,
+        "trigram": 3
+    }
+
+    for model_name, n in models.items():
+        ngramProcessor = NgramPipeline(n)
+        ngramProcessor.preprocess_build_model(data.input_text)
+        ngramProcessor.print_model()
+
+    return {"result": "N-gram model updated"}
 
 
 if __name__ == "__main__":
