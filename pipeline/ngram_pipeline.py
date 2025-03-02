@@ -65,6 +65,13 @@ class NgramPipeline:
         self.save_model()  # Save after updating the model
         self.print_model()  # Print the updated model for debugging
 
+    def predict_next(self, context):
+        context = tuple(context[-(self.n - 1):])  # Keep only relevant context
+        if context in self.model:
+            return self.model[context].most_common(1)[0][0]  # Most probable next word
+        else:
+            return None  # No prediction
+
     def check_sentence(self, doc: Document):
         """Checks if a sentence follows the trained n-gram model using structured input."""
 
@@ -75,7 +82,9 @@ class NgramPipeline:
         tokens = []
         for paragraph in paragraphs:
             for sentence in paragraph.sentences:
-                tokens.extend([token.source for token in sentence.tokens])
+                for token in sentence.tokens:
+                    if token.word_type != 4:
+                        tokens.extend([token.source])
 
         if len(tokens) < self.n:
             return {
@@ -83,14 +92,15 @@ class NgramPipeline:
                 "message": "Sentence is too short for this n-gram model.",
             }
 
-        # Generate n-grams and check matches in the model
-        n_grams = list(ngrams(tokens, self.n))
-        match_count = sum(
-            1 for n_gram in n_grams if tuple(n_gram[:-1]) in self.model and n_gram[-1] in self.model[tuple(n_gram[:-1])]
-        )
-
-        # Compute probability score
-        probability = match_count / len(n_grams) if n_grams else 0
+        context = ['']
+        for token in tokens:
+            context.extend(token)
+            if len(context) > 2:
+                context.pop(0)
+            predicted_word = self.predict_next(context)
+            if predicted_word:
+                print(predicted_word)
+                token.suggestions[len(list(token.suggestions.keys()))+1] = predicted_word
 
         return {
             "doc": doc,  # Return original structure
