@@ -5,9 +5,10 @@ import string
 
 import chardet
 from nltk import edit_distance
-from nltk.corpus import stopwords, words
+from nltk.corpus import stopwords, words, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize, sent_tokenize
 
+from app_config import Configuration
 from models.document import Document
 from models.paragraph import Paragraph
 from models.sentence import Sentence
@@ -16,12 +17,17 @@ from models.types import WordType
 
 
 class TextPipeline:
-    def __init__(self):
+    def __init__(self, config: Configuration):
         self.err = False
         self.err_msg = ''
         self.stop_words = set(stopwords.words('english'))
         # words.fileids() --> ['en', 'en-basic']
-        self.corpus = set([item for item in words.words('en-basic') if item not in stopwords.words('english')])
+        # self.corpus = set([item for item in words.words('en-basic') if item not in stopwords.words('english')])
+        # corpus_dir = config.config_values['corpus_medical']
+        # self.corpus = PlaintextCorpusReader(config.config_values['corpus_medical_dir'], '.*\.txt')
+        self.corpus = PlaintextCorpusReader(config.config_values['corpus_medical_dir'],
+                                            config.config_values['corpus_medical_name'])
+        self.corpus = self.corpus.words()
 
     def execute_asc_pipeline(self, doc: Document):
         try:

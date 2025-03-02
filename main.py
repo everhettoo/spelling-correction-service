@@ -5,6 +5,7 @@ from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app_config import Configuration
 from models.document import Document
 from pipeline.text_pipeline import TextPipeline
 from pipeline.ngram_pipeline import NgramPipeline
@@ -19,14 +20,19 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
+# Import app config.
+config = Configuration()
+
+
 class InputText(BaseModel):
     input_text: str
+
 
 @app.post("/review")
 async def review_text(data: InputText):
     # Create and initialize payload container for text process pipelines.
     doc = Document(data.input_text)
-    processor = TextPipeline()
+    processor = TextPipeline(config)
     processor.execute_asc_pipeline(doc)
 
     ngramProcessor = NgramPipeline(3)
