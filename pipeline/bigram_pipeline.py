@@ -1,0 +1,156 @@
+import nltk
+import os
+import pickle
+
+import utils.regex as rx
+
+from collections import defaultdict, Counter
+from importlib import reload
+from nlppreprocess import NLP
+from nltk import word_tokenize, sent_tokenize, bigrams
+
+from models import token
+from models.document import Document
+
+
+reload(rx)
+
+nltk.download('punkt')  # Ensure NLTK tokenizer is available
+
+class BigramPipeline:
+    def __init__(self, model_path="data/bigram_freq.pkl"):
+        self.err = False
+        self.err_msg = ''
+        self.model_path = model_path if os.path.exists(model_path) and os.access(model_path, os.W_OK) else "data/bigram_freq.pkl"
+        self.model = self.load_model()
+
+    def load_model(self):
+        """Loads the model if it exists; otherwise, initializes an empty defaultdict."""
+        if os.path.exists(self.model_path):
+            try:
+                with open(self.model_path, "rb") as f:
+                    return pickle.load(f)
+            except Exception as e:
+                self.err = True
+                self.err_msg = str(e)
+                print("Warning: Model file corrupted or missing. Initializing a new model.")
+        return defaultdict(Counter)
+
+    def save_model(self):
+        """Saves the model to a pickle file."""
+        try:
+            with open(self.model_path, "wb") as f:
+                pickle.dump(self.model, f)
+        except Exception as e:
+            self.err = True
+            self.err_msg = str(e)
+            print("Warning: save model issue.")
+
+    @staticmethod
+    def clean_text(input_text):
+        # Remove URLs.
+        clean_text = rx.remove_url(input_text)
+        # # Remove HTML tags.
+        clean_text = rx.remove_html(clean_text)
+        # # Remove bracketed words (usually acronyms).
+        clean_text = rx.remove_bracketed_text(clean_text)
+        # Transform contradictions to full form first before removing stop words.
+        return rx.transform_contractions(clean_text)
+
+    def convert2sentences(self, clean_text):
+        # split the paragraph to sentences
+        sentences = sent_tokenize(clean_text)
+        # preprocess each sentence before build the model
+        clean_sentences = []
+        for sentence in sentences:
+            sentence = sentence.lower()
+            if sentence.strip():
+                clean_sentences.append(self.nlp_preprocess(sentence))
+        # load all the sentence and update the model
+        return clean_sentences
+
+    @staticmethod
+    def nlp_preprocess(sentence):
+        """Cleans and preprocesses the sentence using NLP preprocessing."""
+        if not sentence.strip():
+            return ""
+        nlp = NLP()
+        return nlp.process(sentence)
+
+    @staticmethod
+    def tokenize(clean_sentence):
+        """Tokenizes a preprocessed sentence."""
+        if not clean_sentence:  # Prevents errors on empty strings
+            return []
+        return word_tokenize(clean_sentence.lower())
+
+    def update_bigrams(self, input_text):
+        try:
+            clean_text = self.clean_text(input_text)
+            clean_sentences = self.convert2sentences(clean_text)
+
+            for clean_sentence in clean_sentences:
+                # split the sentence to tokens
+                tokens = self.tokenize(clean_sentence.lower())
+                # add on start and end padding in the tokens
+                padded_tokens = ["<s>"] + tokens + ["</s>"]
+                # generate the bigrams model with nltk
+                bigram_list = list(bigrams(padded_tokens))
+                # update the new value into existing bigrams model
+                for w1, w2 in bigram_list:
+                    self.model[w1][w2] += 1
+            # save the new bigrams model into physical file
+            self.save_model()
+            print(self.load_model())
+        except Exception as e:
+            self.err = True
+            self.err_msg = str(e)
+            print("Warning: update bi_grams Issue.")
+
+    def rank_suggestions(self, previous_word, suggestions):
+        previous_word = previous_word.lower()
+        ranking = {}
+        for key in suggestions:
+            suggestion = suggestions[key].lower()
+            rank = self.model[previous_word][suggestion]  # Get frequency count
+            ranking[rank] = suggestion
+        # Sort by frequency in descending order
+        ranked_suggestions = sorted(ranking.items(), key=lambda x: x[1], reverse=True)
+        i = 0
+        my_dict = {}
+        for ranked_suggestion in ranked_suggestions:
+            my_dict = {i: ranked_suggestion[1]}
+            i += 1
+        return my_dict
+
+    def check_sentence(self, doc: Document):
+        """Checks if a sentence follows the trained n-gram model using structured input."""
+        input_text = doc.input_text
+        paragraphs = doc.paragraphs
+
+        # preprocess the input text without edit distance
+        clean_text = self.clean_text(input_text)
+        clean_sentences = self.convert2sentences(clean_text)
+
+        i = 0
+        j = 0
+        for clean_sentence in clean_sentences:
+            # split the sentence to tokens
+            tokens = self.tokenize(clean_sentence.lower())
+            ed_sentences = paragraphs[i].sentences
+            ed_tokens = ed_sentences[j].tokens
+            previous_token = ''
+            for token in tokens:
+                for ed_token in ed_tokens:
+                    if ed_token.source == token and ed_token.suggestions:
+                        ed_token.suggestions = self.rank_suggestions(previous_token, ed_token.suggestions)
+                    previous_token = token
+            j += 1
+            if len(ed_sentences) == j:
+                i += 1
+                j = 0
+
+        return {
+            "doc": doc,  # Return original structure
+            "message": "Sentence consistency checked.",
+        }
