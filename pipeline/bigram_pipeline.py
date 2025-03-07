@@ -46,8 +46,7 @@ class BigramPipeline:
             self.err_msg = str(e)
             print("Warning: save model issue.")
 
-    @staticmethod
-    def clean_text(input_text):
+    def clean_text(self, input_text):
         # Remove URLs.
         clean_text = rx.remove_url(input_text)
         # # Remove HTML tags.
@@ -69,16 +68,14 @@ class BigramPipeline:
         # load all the sentence and update the model
         return clean_sentences
 
-    @staticmethod
-    def nlp_preprocess(sentence):
+    def nlp_preprocess(self, sentence):
         """Cleans and preprocesses the sentence using NLP preprocessing."""
         if not sentence.strip():
             return ""
         nlp = NLP()
         return nlp.process(sentence)
 
-    @staticmethod
-    def tokenize(clean_sentence):
+    def tokenize(self, clean_sentence):
         """Tokenizes a preprocessed sentence."""
         if not clean_sentence:  # Prevents errors on empty strings
             return []
