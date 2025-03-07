@@ -112,15 +112,20 @@ class BigramPipeline:
         ranking = {}
         for key in suggestions:
             suggestion = suggestions[key].lower()
-            rank = self.model[previous_word][suggestion]  # Get frequency count
-            ranking[rank] = suggestion
+            rank = self.model.get(previous_word, {}).get(suggestion, 0)  # Avoid KeyError
+
+            if rank not in ranking:
+                ranking[rank] = []
+            ranking[rank].append(suggestion)
         # Sort by frequency in descending order
-        ranked_suggestions = sorted(ranking.items(), key=lambda x: x[1], reverse=True)
-        i = 0
+        ranked_suggestions = sorted(ranking.items(), key=lambda x: x[0], reverse=True)
+        # Flatten sorted suggestions into a dictionary
         my_dict = {}
-        for ranked_suggestion in ranked_suggestions:
-            my_dict = {i: ranked_suggestion[1]}
-            i += 1
+        i = 0
+        for _, words in ranked_suggestions:
+            for word in words:
+                my_dict[i] = word
+                i += 1
         return my_dict
 
     def check_sentence(self, doc: Document):
