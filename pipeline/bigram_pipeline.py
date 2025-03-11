@@ -88,7 +88,7 @@ class BigramPipeline:
         i = 0
         while i < len(tokens):
             if i < len(tokens) - 1 and tokens[i + 1] in contractions:
-                merged_tokens.append(tokens[i] + tokens[i + 1])  # Merge word + contraction
+                merged_tokens.append(tokens[i] + "'" + tokens[i + 1])  # Merge word + contraction
                 i += 2  # Skip the next token (contraction)
             else:
                 merged_tokens.append(tokens[i])
@@ -141,6 +141,7 @@ class BigramPipeline:
         return my_dict
 
     def check_sentence(self, doc: Document):
+        is_update = True
         """Checks if a sentence follows the trained n-gram model using structured input."""
         input_text = doc.input_text
         paragraphs = doc.paragraphs
@@ -161,11 +162,15 @@ class BigramPipeline:
                 for ed_token in ed_tokens:
                     if ed_token.source == token and ed_token.suggestions:
                         ed_token.suggestions = self.rank_suggestions(previous_token, ed_token.suggestions)
+                        is_update = False
                 previous_token = token
             j += 1
             if len(ed_sentences) == j:
                 i += 1
                 j = 0
+
+        if is_update:
+            self.update_bigrams(input_text)
 
         doc.input_text = ''
 
