@@ -52,9 +52,7 @@ class BigramPipeline:
         # # Remove HTML tags.
         clean_text = rx.remove_html(clean_text)
         # # Remove bracketed words (usually acronyms).
-        clean_text = rx.remove_bracketed_text(clean_text)
-        # Transform contradictions to full form first before removing stop words.
-        return rx.transform_contractions(clean_text)
+        return rx.remove_bracketed_text(clean_text)
 
     def convert2sentences(self, clean_text):
         # split the paragraph to sentences
@@ -141,16 +139,18 @@ class BigramPipeline:
             tokens = self.tokenize(clean_sentence.lower())
             ed_sentences = paragraphs[i].sentences
             ed_tokens = ed_sentences[j].tokens
-            previous_token = ''
+            previous_token = '<s>'
             for token in tokens:
                 for ed_token in ed_tokens:
                     if ed_token.source == token and ed_token.suggestions:
                         ed_token.suggestions = self.rank_suggestions(previous_token, ed_token.suggestions)
-                    previous_token = token
+                previous_token = token
             j += 1
             if len(ed_sentences) == j:
                 i += 1
                 j = 0
+
+        doc.input_text = ''
 
         return {
             "doc": doc,  # Return original structure
