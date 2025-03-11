@@ -36,8 +36,6 @@ class TextPipeline:
         except Exception as e:
             self.err = True
             self.err_msg = str(e)
-        finally:
-            doc.input_text = ''
 
     def parse_doc(self, doc: Document):
         doc.paragraphs = []
