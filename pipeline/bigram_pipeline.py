@@ -47,6 +47,9 @@ class BigramPipeline:
             print("Warning: save model issue.")
 
     def clean_text(self, input_text):
+        """Removes URLs, HTML tags, and bracketed words from the text."""
+        if not input_text:
+            return ""
         # Remove URLs.
         clean_text = rx.remove_url(input_text)
         # # Remove HTML tags.
@@ -77,7 +80,21 @@ class BigramPipeline:
         """Tokenizes a preprocessed sentence."""
         if not clean_sentence:  # Prevents errors on empty strings
             return []
-        return word_tokenize(clean_sentence.lower())
+
+        tokens = word_tokenize(clean_sentence)  # Tokenize sentence
+        merged_tokens = []
+        contractions = {"s", "re", "m", "ll", "t", "ve", "t"}  # Contractions to merge
+
+        i = 0
+        while i < len(tokens):
+            if i < len(tokens) - 1 and tokens[i + 1] in contractions:
+                merged_tokens.append(tokens[i] + tokens[i + 1])  # Merge word + contraction
+                i += 2  # Skip the next token (contraction)
+            else:
+                merged_tokens.append(tokens[i])
+                i += 1
+
+        return merged_tokens
 
     def update_bigrams(self, input_text):
         try:
