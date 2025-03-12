@@ -60,6 +60,7 @@ class TextPipeline:
             # Add the new paragraph into document.
             doc.paragraphs.append(paragraph)
 
+    # TODO: check it is required or not
     def __detect_language_when_english(self, doc: Document):
         # TODO: To implement the logic.
         input_text = doc.input_text.encode()
@@ -69,6 +70,7 @@ class TextPipeline:
         else:
             return False
 
+    # TODO: check it is required or not
     def __tokenize_words(self, doc: Document):
         """
         This method tokenizes the text and returns tokens when no error occurs.
@@ -94,6 +96,10 @@ class TextPipeline:
             return
         if token.source.lower() in self.corpus:
             token.word_type = WordType.WORD
+            return
+        contractions = {"'s", "'re", "'m", "'ll", "'t", "'ve"}
+        if token.source.lower() in contractions:
+            token.word_type = WordType.POSSESSION
             return
 
         i = 0
