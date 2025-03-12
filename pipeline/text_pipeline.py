@@ -108,6 +108,10 @@ class TextPipeline:
             if w in token.suggestions.values():
                 continue
 
+            length_diff = abs(len(token.source) - len(w))
+            if length_diff == -4 :
+                break
+
             m = edit_distance(token.source.lower(), w)
             if m == 1:
                 token.suggestions[i] = w
