@@ -52,22 +52,24 @@ class TextPipeline:
                 word_list = self.spacy_nlp(s)
 
                 # word_list = word_tokenize(s)
-                clean_word_list = []
-                contractions = {"'s", "'re", "'m", "'ll", "'t", "'ve"}
-                i = 0
-                while i < len(word_list):
-                    word = str(word_list[i])
-                    previous_word = str(word_list[i-1])
-                    if word in contractions:
-                        clean_word =  previous_word+word
-                        clean_word_list.pop()
-                        clean_word_list.append(clean_word)
-                    else:
-                        clean_word_list.append(word)
-                    i += 1
+                # clean_word_list = []
+                # contractions = {"'s", "'re", "'m", "'ll", "'t", "'ve"}
+                # i = 0
+                #
+                # while i < len(word_list):
+                #     word = str(word_list[i])
+                #     previous_word = str(word_list[i-1])
+                #     if word in contractions:
+                #         clean_word =  previous_word+word
+                #         clean_word_list.pop()
+                #         clean_word_list.append(clean_word)
+                #     else:
+                #         clean_word_list.append(word)
+                #     i += 1
 
-                for word in clean_word_list:
+                for word in word_list:
                     # Process token
+                    print(word.pos_)
                     token = Token(str(word))
                     self.__review_words(token)
                     sentence.tokens.append(token)
@@ -119,11 +121,13 @@ class TextPipeline:
     def __review_words(self, token: Token):
         token.suggestions = dict()
 
+        if token.source.lower() == "'s":
+            token.word_type = WordType.POSSESSION
+            return
+
         self.__check_contractions(token)
         if token.word_type == WordType.CONTRACTION:
             return
-        elif token.source.lower().endswith("'s"):
-            token.word_type = WordType.POSSESSION
         elif token.source.lower() in string.punctuation:
             token.word_type = WordType.PUNCTUATION
             return

@@ -114,6 +114,7 @@ class BigramPipeline:
         for key in suggestions:
             suggestion = suggestions[key].lower()
             rank = self.model.get(previous_word, {}).get(suggestion, 0)  # Avoid KeyError
+            print(rank)
             if rank not in ranking:
                 ranking[rank] = []
             ranking[rank].append(suggestion)
