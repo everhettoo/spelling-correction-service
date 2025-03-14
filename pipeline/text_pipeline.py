@@ -8,6 +8,7 @@ import spacy
 from nltk import edit_distance
 from nltk.corpus import stopwords, words, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize, sent_tokenize
+from spacy.tokenizer import Tokenizer
 
 from app_config import Configuration
 from models.document import Document
@@ -15,6 +16,7 @@ from models.paragraph import Paragraph
 from models.sentence import Sentence
 from models.token import Token
 from models.types import WordType
+from spacy.lang.en import English
 
 class TextPipeline:
     def __init__(self, config: Configuration):
@@ -29,6 +31,7 @@ class TextPipeline:
                                             config.config_values['corpus_medical_name'])
         self.corpus = self.corpus.words()
         self.spacy_nlp = spacy.load("en_core_web_sm")
+        self.nlp = English()
         self.common_contractions = {"can't": "cannot", "won't": "will not", "isn't": "is not", "you're": "you are", "I'm": "I am", "they've": "they have", "he's": "he is", "she'd": "she would", "we'll": "we will"}
 
     def execute_asc_pipeline(self, doc: Document):
@@ -49,23 +52,8 @@ class TextPipeline:
             for s in sentence_list:
                 # Process sentence
                 sentence = Sentence()
-                word_list = self.spacy_nlp(s)
-
-                # word_list = word_tokenize(s)
-                # clean_word_list = []
-                # contractions = {"'s", "'re", "'m", "'ll", "'t", "'ve"}
-                # i = 0
-                #
-                # while i < len(word_list):
-                #     word = str(word_list[i])
-                #     previous_word = str(word_list[i-1])
-                #     if word in contractions:
-                #         clean_word =  previous_word+word
-                #         clean_word_list.pop()
-                #         clean_word_list.append(clean_word)
-                #     else:
-                #         clean_word_list.append(word)
-                #     i += 1
+                tokenizer = Tokenizer(self.nlp.vocab)
+                word_list = tokenizer(s)
 
                 for word in word_list:
                     # Process token
@@ -74,8 +62,31 @@ class TextPipeline:
                     self.__review_words(token)
                     sentence.tokens.append(token)
 
+                new_sentence = Sentence()
+
+                for token in sentence.tokens:
+                    if token.word_type == WordType.CONTRACTION:
+                        tokens = token.source.split("'")
+                        token_0 = Token(tokens[0])
+                        token_0.word_type = WordType.WORD
+                        token_1 = Token("'"+tokens[1])
+                        token_1.word_type = WordType.CONTRACTION
+                        new_sentence.tokens.append(token_0)
+                        new_sentence.tokens.append(token_1)
+                    elif token.word_type == WordType.POSSESSION:
+                        tokens = token.source.split("'")
+                        token_0 = Token(tokens[0])
+                        token_0.word_type = WordType.WORD
+                        token_0.suggestions = token.suggestions
+                        token_1 = Token("'"+tokens[1])
+                        token_1.word_type = WordType.POSSESSION
+                        new_sentence.tokens.append(token_0)
+                        new_sentence.tokens.append(token_1)
+                    else:
+                        new_sentence.tokens.append(token)
+
                 # Add processed sentence (+tokens) into a new paragraph.
-                paragraph.sentences.append(sentence)
+                paragraph.sentences.append(new_sentence)
 
             # Add the new paragraph into document.
             doc.paragraphs.append(paragraph)
@@ -105,28 +116,24 @@ class TextPipeline:
         except Exception as e:
             raise e
 
-    def __check_contractions(self, token: Token):
-        min_distance = float('inf')
-        j = 0
-
-        for correct_form in self.common_contractions.keys():
-            dist = edit_distance(token.source, correct_form)
-            if dist < min_distance:
-                min_distance = dist
-                if min_distance <= 2:
-                    token.suggestions[j] = correct_form
-                    j += 1
-                    token.word_type = WordType.CONTRACTION
-
     def __review_words(self, token: Token):
         token.suggestions = dict()
-
-        if token.source.lower() == "'s":
-            token.word_type = WordType.POSSESSION
+        if token.source in self.common_contractions.keys():
+            token.word_type = WordType.CONTRACTION
             return
+        elif "'" in token.source.lower():
+            token.word_type = WordType.POSSESSION
+            new_words = token.source.split("'")
+            new_word = new_words[0]
+            i = 0
+            for w in self.corpus:
+                if w in token.suggestions.values():
+                    continue
 
-        self.__check_contractions(token)
-        if token.word_type == WordType.CONTRACTION:
+                m = edit_distance(new_word, w)
+                if m == 1:
+                    token.suggestions[i] = w
+                    i = i + 1
             return
         elif token.source.lower() in string.punctuation:
             token.word_type = WordType.PUNCTUATION
