@@ -1,17 +1,13 @@
 import nltk
 import os
 import pickle
-
 import utils.regex as rx
 
 from collections import defaultdict, Counter
 from importlib import reload
 from nlppreprocess import NLP
 from nltk import word_tokenize, sent_tokenize, bigrams
-
-from models import token
 from models.document import Document
-
 
 reload(rx)
 
@@ -52,9 +48,9 @@ class BigramPipeline:
             return ""
         # Remove URLs.
         clean_text = rx.remove_url(input_text)
-        # # Remove HTML tags.
+        # Remove HTML tags.
         clean_text = rx.remove_html(clean_text)
-        # # Remove bracketed words (usually acronyms).
+        # Remove bracketed words (usually acronyms).
         return rx.remove_bracketed_text(clean_text)
 
     def convert2sentences(self, clean_text):
@@ -80,27 +76,20 @@ class BigramPipeline:
         """Tokenizes a preprocessed sentence."""
         if not clean_sentence:  # Prevents errors on empty strings
             return []
-
         tokens = word_tokenize(clean_sentence)  # Tokenize sentence
-        merged_tokens = []
-        contractions = {"s", "re", "m", "ll", "t", "ve", "t"}  # Contractions to merge
-
+        clean_tokens = []
+        contractions = {"s", "re", "m", "ll", "t", "ve"}
         i = 0
         while i < len(tokens):
-            if i < len(tokens) - 1 and tokens[i + 1] in contractions:
-                merged_tokens.append(tokens[i] + "'" + tokens[i + 1])  # Merge word + contraction
-                i += 2  # Skip the next token (contraction)
-            else:
-                merged_tokens.append(tokens[i])
-                i += 1
-
-        return merged_tokens
+            if tokens[i] not in contractions:
+                clean_tokens.append(tokens[i])
+            i += 1
+        return clean_tokens
 
     def update_bigrams(self, input_text):
         try:
             clean_text = self.clean_text(input_text)
             clean_sentences = self.convert2sentences(clean_text)
-
             for clean_sentence in clean_sentences:
                 # split the sentence to tokens
                 tokens = self.tokenize(clean_sentence.lower())
@@ -125,7 +114,7 @@ class BigramPipeline:
         for key in suggestions:
             suggestion = suggestions[key].lower()
             rank = self.model.get(previous_word, {}).get(suggestion, 0)  # Avoid KeyError
-
+            print(rank)
             if rank not in ranking:
                 ranking[rank] = []
             ranking[rank].append(suggestion)
@@ -145,11 +134,9 @@ class BigramPipeline:
         """Checks if a sentence follows the trained n-gram model using structured input."""
         input_text = doc.input_text
         paragraphs = doc.paragraphs
-
         # preprocess the input text without edit distance
         clean_text = self.clean_text(input_text)
         clean_sentences = self.convert2sentences(clean_text)
-
         i = 0
         j = 0
         for clean_sentence in clean_sentences:
@@ -168,12 +155,9 @@ class BigramPipeline:
             if len(ed_sentences) == j:
                 i += 1
                 j = 0
-
         if is_update:
             self.update_bigrams(input_text)
-
         doc.input_text = ''
-
         return {
             "doc": doc,  # Return original structure
             "message": "Sentence consistency checked.",

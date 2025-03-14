@@ -8,13 +8,13 @@ from app_config import Configuration
 from models.document import Document
 from pipeline.text_pipeline import TextPipeline
 from pipeline.bigram_pipeline import BigramPipeline
+from datetime import datetime
 
 # Import app config.
 config = Configuration()
 
 # Declare BigramPipeline globally
 bigram_processor = None
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,7 +24,6 @@ async def lifespan(app: FastAPI):
     yield
     bigram_processor = None  # Cleanup on shutdown
     print("BigramPipeline cleared")
-
 
 app = FastAPI(lifespan=lifespan)
 
@@ -40,7 +39,6 @@ app.add_middleware(
 class InputText(BaseModel):
     input_text: str
 
-
 @app.post("/review")
 async def review_text(data: InputText):
     """Processes input text using text pipeline and bigram model."""
@@ -49,14 +47,26 @@ async def review_text(data: InputText):
     if not bigram_processor:
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="BigramPipeline not initialized")
 
+    current_time = datetime.now().time()
+    print("text start Time:", current_time)
     doc = Document(data.input_text)
     processor = TextPipeline(config)
     processor.execute_asc_pipeline(doc)
+    current_time = datetime.now().time()
+    print("text end Time:", current_time)
 
     if processor.err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=processor.err_msg)
 
+    current_time = datetime.now().time()
+    print("bigrams start Time:", current_time)
     doc = bigram_processor.check_sentence(doc)
+    current_time = datetime.now().time()
+    print("bigrams end Time:", current_time)
+
+    if bigram_processor.err:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=bigram_processor.err_msg)
+
     return doc
 
 
