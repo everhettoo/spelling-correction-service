@@ -10,3 +10,4 @@ class WordType(Enum):
     PUNCTUATION = 3
     STOP_WORD = 4
     POSSESSION = 5
+    CONTRACTION = 6

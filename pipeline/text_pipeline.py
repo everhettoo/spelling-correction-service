@@ -4,6 +4,7 @@
 import string
 
 import chardet
+import spacy
 from nltk import edit_distance
 from nltk.corpus import stopwords, words, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize, sent_tokenize
@@ -14,7 +15,6 @@ from models.paragraph import Paragraph
 from models.sentence import Sentence
 from models.token import Token
 from models.types import WordType
-
 
 class TextPipeline:
     def __init__(self, config: Configuration):
@@ -28,6 +28,8 @@ class TextPipeline:
         self.corpus = PlaintextCorpusReader(config.config_values['corpus_medical_dir'],
                                             config.config_values['corpus_medical_name'])
         self.corpus = self.corpus.words()
+        self.spacy_nlp = spacy.load("en_core_web_sm")
+        self.common_contractions = {"can't": "cannot", "won't": "will not", "isn't": "is not", "you're": "you are", "I'm": "I am", "they've": "they have", "he's": "he is", "she'd": "she would", "we'll": "we will"}
 
     def execute_asc_pipeline(self, doc: Document):
         try:
@@ -47,10 +49,26 @@ class TextPipeline:
             for s in sentence_list:
                 # Process sentence
                 sentence = Sentence()
-                word_list = word_tokenize(s)
-                for word in word_list:
+                word_list = self.spacy_nlp(s)
+
+                # word_list = word_tokenize(s)
+                clean_word_list = []
+                contractions = {"'s", "'re", "'m", "'ll", "'t", "'ve"}
+                i = 0
+                while i < len(word_list):
+                    word = str(word_list[i])
+                    previous_word = str(word_list[i-1])
+                    if word in contractions:
+                        clean_word =  previous_word+word
+                        clean_word_list.pop()
+                        clean_word_list.append(clean_word)
+                    else:
+                        clean_word_list.append(word)
+                    i += 1
+
+                for word in clean_word_list:
                     # Process token
-                    token = Token(word)
+                    token = Token(str(word))
                     self.__review_words(token)
                     sentence.tokens.append(token)
 
@@ -85,21 +103,35 @@ class TextPipeline:
         except Exception as e:
             raise e
 
+    def __check_contractions(self, token: Token):
+        min_distance = float('inf')
+        j = 0
+
+        for correct_form in self.common_contractions.keys():
+            dist = edit_distance(token.source, correct_form)
+            if dist < min_distance:
+                min_distance = dist
+                if min_distance <= 2:
+                    token.suggestions[j] = correct_form
+                    j += 1
+                    token.word_type = WordType.CONTRACTION
+
     def __review_words(self, token: Token):
         token.suggestions = dict()
 
-        if token.source in string.punctuation:
+        self.__check_contractions(token)
+        if token.word_type == WordType.CONTRACTION:
+            return
+        elif token.source.lower().endswith("'s"):
+            token.word_type = WordType.POSSESSION
+        elif token.source.lower() in string.punctuation:
             token.word_type = WordType.PUNCTUATION
             return
-        if token.source.lower() in self.stop_words:
+        elif token.source.lower() in self.stop_words:
             token.word_type = WordType.STOP_WORD
             return
-        if token.source.lower() in self.corpus:
+        elif token.source.lower() in self.corpus:
             token.word_type = WordType.WORD
-            return
-        contractions = {"'s", "'re", "'m", "'ll", "'t", "'ve"}
-        if token.source.lower() in contractions:
-            token.word_type = WordType.POSSESSION
             return
 
         i = 0
@@ -107,10 +139,6 @@ class TextPipeline:
             # TODO: Not sure why same word repeats twice.
             if w in token.suggestions.values():
                 continue
-
-            length_diff = abs(len(token.source) - len(w))
-            if length_diff == -4 :
-                break
 
             m = edit_distance(token.source.lower(), w)
             if m == 1:
