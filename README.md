@@ -14,5 +14,6 @@ Pre-requisite: Python was installed and configured in the local machine.
 - activate the virtual environment (bash cmd): `source venv/bin/activate`
 - activate the virtual environment (windows): `venv\Scripts\activate`
 - install required libraries: `pip install -r requirements.txt`
+- download spacy corpus: `python -m spacy download en`
 - run the service: `python main.py`
 - to read the service docs goto: http://localhost:8000/docs
