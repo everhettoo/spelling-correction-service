@@ -5,9 +5,13 @@ import string
 
 import chardet
 import spacy
+
 from nltk import edit_distance
-from nltk.corpus import stopwords, words, PlaintextCorpusReader
+from nltk.corpus import stopwords, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize, sent_tokenize
+from noisy_channel.proba_distributor import ProbaDistributor
+from noisy_channel.channel_v1 import ChannelV1, datafile
+from spacy.lang.en import English
 from spacy.tokenizer import Tokenizer
 
 from app_config import Configuration
@@ -16,7 +20,7 @@ from models.paragraph import Paragraph
 from models.sentence import Sentence
 from models.token import Token
 from models.types import WordType
-from spacy.lang.en import English
+
 
 class TextPipeline:
     def __init__(self, config: Configuration):
@@ -32,7 +36,17 @@ class TextPipeline:
         self.corpus = self.corpus.words()
         self.spacy_nlp = spacy.load("en_core_web_sm")
         self.nlp = English()
-        self.common_contractions = {"can't": "cannot", "won't": "will not", "isn't": "is not", "you're": "you are", "I'm": "I am", "they've": "they have", "he's": "he is", "she'd": "she would", "we'll": "we will"}
+        self.common_contractions = {"can't": "cannot", "won't": "will not", "isn't": "is not", "you're": "you are",
+                                    "I'm": "I am", "they've": "they have", "he's": "he is", "she'd": "she would",
+                                    "we'll": "we will"}
+
+        # Build noisy-channel model.
+        self.p_lang_model = ProbaDistributor(datafile('data/count_1w.tsv'))
+        self.p_error_model = ProbaDistributor(datafile('data/count_1edit.tsv'))
+        self.channel = ChannelV1(lang_model=self.p_lang_model,
+                                 error_model=self.p_error_model,
+                                 spell_error=(1. / 20.),
+                                 alphabet='abcdefghijklmnopqrstuvwxyz')
 
     def execute_asc_pipeline(self, doc: Document):
         try:
@@ -56,37 +70,19 @@ class TextPipeline:
                 word_list = tokenizer(s)
 
                 for word in word_list:
-                    # Process token
-                    print(word.pos_)
+                    # Parse token to relevant types:
                     token = Token(str(word))
-                    self.__review_words(token)
-                    sentence.tokens.append(token)
+                    tokens = self.__parse_token(token)
+                    sentence.tokens.extend(tokens)
 
-                new_sentence = Sentence()
+                print('completed token parsing ...')
 
                 for token in sentence.tokens:
-                    if token.word_type == WordType.CONTRACTION:
-                        tokens = token.source.split("'")
-                        token_0 = Token(tokens[0])
-                        token_0.word_type = WordType.WORD
-                        token_1 = Token("'"+tokens[1])
-                        token_1.word_type = WordType.CONTRACTION
-                        new_sentence.tokens.append(token_0)
-                        new_sentence.tokens.append(token_1)
-                    elif token.word_type == WordType.POSSESSION:
-                        tokens = token.source.split("'")
-                        token_0 = Token(tokens[0])
-                        token_0.word_type = WordType.WORD
-                        token_0.suggestions = token.suggestions
-                        token_1 = Token("'"+tokens[1])
-                        token_1.word_type = WordType.POSSESSION
-                        new_sentence.tokens.append(token_0)
-                        new_sentence.tokens.append(token_1)
-                    else:
-                        new_sentence.tokens.append(token)
+                    # Process token.
+                    self.__review_words(token)
 
                 # Add processed sentence (+tokens) into a new paragraph.
-                paragraph.sentences.append(new_sentence)
+                paragraph.sentences.append(sentence)
 
             # Add the new paragraph into document.
             doc.paragraphs.append(paragraph)
@@ -116,42 +112,56 @@ class TextPipeline:
         except Exception as e:
             raise e
 
-    def __review_words(self, token: Token):
-        token.suggestions = dict()
+    def __parse_token(self, token: Token) -> list[Token]:
+        token_list = []
         if token.source in self.common_contractions.keys():
             token.word_type = WordType.CONTRACTION
-            return
         elif "'" in token.source.lower():
-            token.word_type = WordType.POSSESSION
-            new_words = token.source.split("'")
-            new_word = new_words[0]
-            i = 0
+            token.word_type = WordType.APOSTROPHE
+        elif token.source.lower() in string.punctuation:
+            token.word_type = WordType.PUNCTUATION
+        elif token.source.lower() in self.stop_words:
+            token.word_type = WordType.STOP_WORD
+        elif token.source.lower() in self.corpus:
+            token.word_type = WordType.WORD
+        else:
+            token.word_type = WordType.NON_WORD
+
+        if token.word_type == WordType.APOSTROPHE:
+            # There must be two segments.
+            word_list = token.source.split("'")
+            token_0 = Token(word_list[0])
+            token_1 = Token(word_list[1])
+
+            # The first is labelled as word or non - word.
+            token_0.word_type = WordType.WORD if word_list[0] in self.corpus else WordType.NON_WORD
+
+            # Second is always the carrier.
+            token_1.word_type = WordType.APOSTROPHE
+
+            token_list.append(token_0)
+            token_list.append(token_1)
+        else:
+            token_list.append(token)
+
+        return token_list
+
+    def __review_words(self, token: Token):
+        token.suggestions = dict()
+
+        i = 0
+        if token.word_type == WordType.NON_WORD:
             for w in self.corpus:
                 if w in token.suggestions.values():
                     continue
 
-                m = edit_distance(new_word, w)
+                m = edit_distance(token.source.lower(), w)
                 if m == 1:
                     token.suggestions[i] = w
                     i = i + 1
-            return
-        elif token.source.lower() in string.punctuation:
-            token.word_type = WordType.PUNCTUATION
-            return
-        elif token.source.lower() in self.stop_words:
-            token.word_type = WordType.STOP_WORD
-            return
-        elif token.source.lower() in self.corpus:
-            token.word_type = WordType.WORD
-            return
 
-        i = 0
-        for w in self.corpus:
-            # TODO: Not sure why same word repeats twice.
-            if w in token.suggestions.values():
-                continue
-
-            m = edit_distance(token.source.lower(), w)
-            if m == 1:
-                token.suggestions[i] = w
-                i = i + 1
+        if token.word_type == WordType.NON_WORD or token.word_type == WordType.WORD:
+            c = self.channel.correct(token.source.lower())
+            print(c)
+            if c not in token.suggestions.values() and c != token.source.lower():
+                token.suggestions[i] = c
