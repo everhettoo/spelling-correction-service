@@ -14,7 +14,7 @@ class Test(TestCase):
         cls.pipeline = text_pipeline.TextPipeline(config = config)
 
     def test_parse(self):
-        doc = Document(test_data.sample_text2)
+        doc = Document(test_data.sample_text4)
         # pipeline = text_pipeline.TextPipeline()
         self.pipeline.parse_doc(doc)
 

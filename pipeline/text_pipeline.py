@@ -41,6 +41,7 @@ class TextPipeline:
                                     "we'll": "we will"}
 
         # Build noisy-channel model.
+        # TODO: Read paths from config.
         self.p_lang_model = ProbaDistributor(datafile('data/count_1w.tsv'))
         self.p_error_model = ProbaDistributor(datafile('data/count_1edit.tsv'))
         self.channel = ChannelV1(lang_model=self.p_lang_model,
@@ -114,7 +115,10 @@ class TextPipeline:
 
     def __parse_token(self, token: Token) -> list[Token]:
         token_list = []
-        if token.source in self.common_contractions.keys():
+        # TODO: This need to configured in the spacy rule for tokenization.
+        if "." in token.source.lower():
+            token.word_type = WordType.UNDEFINED
+        elif token.source in self.common_contractions.keys():
             token.word_type = WordType.CONTRACTION
         elif "'" in token.source.lower():
             token.word_type = WordType.APOSTROPHE
@@ -127,7 +131,24 @@ class TextPipeline:
         else:
             token.word_type = WordType.NON_WORD
 
-        if token.word_type == WordType.APOSTROPHE:
+        if token.word_type == WordType.UNDEFINED:
+            # Two segments to remove '.'
+            # dance.
+            # dr.albert
+            # Fix for spacy issue defined above.
+            pos = string.token.source.index('.')
+            if pos == len(token.source):
+                token_0 = Token(token.source[pos:])
+                token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
+                token_1 = Token('.')
+                token_1.word_type = WordType.PUNCTUATION
+                token_list.append(token_0)
+                token_list.append(token_1)
+            else:
+                # A name can be treated a single word.
+                token.word_type = WordType.NON_WORD
+                token_list.append(token)
+        elif token.word_type == WordType.APOSTROPHE:
             # There must be two segments.
             word_list = token.source.split("'")
             token_0 = Token(word_list[0])
