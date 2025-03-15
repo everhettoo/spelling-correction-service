@@ -9,5 +9,5 @@ class WordType(Enum):
     NON_WORD = 2
     PUNCTUATION = 3
     STOP_WORD = 4
-    POSSESSION = 5
+    APOSTROPHE = 5
     CONTRACTION = 6
