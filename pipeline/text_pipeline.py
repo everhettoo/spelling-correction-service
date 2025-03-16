@@ -82,6 +82,8 @@ class TextPipeline:
                     # Process token.
                     self.__review_words(token)
 
+                print('completed token review ...')
+
                 # Add processed sentence (+tokens) into a new paragraph.
                 paragraph.sentences.append(sentence)
 
@@ -183,6 +185,5 @@ class TextPipeline:
 
         if token.word_type == WordType.NON_WORD or token.word_type == WordType.WORD:
             c = self.channel.correct(token.source.lower())
-            print(c)
             if c not in token.suggestions.values() and c != token.source.lower():
                 token.suggestions[i] = c

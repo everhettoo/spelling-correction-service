@@ -131,7 +131,7 @@ class BigramPipeline:
 
     def check_sentence(self, doc: Document):
         is_update = True
-        """Checks if a sentence follows the trained n-gram model using structured input."""
+        print("""Checks if a sentence follows the trained n-gram model using structured input.""")
         input_text = doc.input_text
         paragraphs = doc.paragraphs
         # preprocess the input text without edit distance
