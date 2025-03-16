@@ -13,11 +13,22 @@ class Test(TestCase):
         config = Configuration()
         cls.pipeline = text_pipeline.TextPipeline(config = config)
 
+    def test_parse_with_multi_paragraph(self):
+        doc = Document(test_data.sample_text1)
+        # pipeline = text_pipeline.TextPipeline()
+        self.pipeline.parse_doc(doc)
+
+    def test_parse_with_contraction(self):
+        doc = Document(test_data.sample_text2)
+        # pipeline = text_pipeline.TextPipeline()
+        self.pipeline.parse_doc(doc)
+
+    def test_parse_with_contraction2(self):
+        doc = Document(test_data.sample_text3)
+        # pipeline = text_pipeline.TextPipeline()
+        self.pipeline.parse_doc(doc)
+
     def test_parse(self):
         doc = Document(test_data.sample_text4)
         # pipeline = text_pipeline.TextPipeline()
         self.pipeline.parse_doc(doc)
-
-
-
-

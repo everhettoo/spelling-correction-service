@@ -22,6 +22,8 @@ class Configuration:
         corpus_medical_name = config.get('Corpus-Med', 'medical_name')
         corpus_medical_freq_dir = config.get('Corpus-Med', 'medical_freq_dir')
         corpus_medical_freq_name = config.get('Corpus-Med', 'medical_freq_name')
+        noisy_channel_edit_file = config.get('Noisy-Channel', 'edit_file')
+        noisy_channel_word_file = config.get('Noisy-Channel', 'word_file')
 
         # Return a dictionary with the retrieved values
         self.config_values = {
@@ -31,5 +33,7 @@ class Configuration:
             'corpus_medical_dir': corpus_medical_dir,
             'corpus_medical_name': corpus_medical_name,
             'corpus_medical_freq_dir': corpus_medical_freq_dir,
-            'corpus_medical_freq_name': corpus_medical_freq_name
+            'corpus_medical_freq_name': corpus_medical_freq_name,
+            'noisy_channel_edit_file': noisy_channel_edit_file,
+            'noisy_channel_word_file': noisy_channel_word_file
         }

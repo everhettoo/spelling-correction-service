@@ -23,6 +23,8 @@ contractions = {
 }
 
 
+
+
 def remove_url(text: str) -> str:
     return re.sub(url_pattern, '', text)
 

@@ -42,8 +42,8 @@ class TextPipeline:
 
         # Build noisy-channel model.
         # TODO: Read paths from config.
-        self.p_lang_model = ProbaDistributor(datafile('data/count_1w.tsv'))
-        self.p_error_model = ProbaDistributor(datafile('data/count_1edit.tsv'))
+        self.p_lang_model = ProbaDistributor(datafile(config.config_values['noisy_channel_word_file']))
+        self.p_error_model = ProbaDistributor(datafile(config.config_values['noisy_channel_edit_file']))
         self.channel = ChannelV1(lang_model=self.p_lang_model,
                                  error_model=self.p_error_model,
                                  spell_error=(1. / 20.),
@@ -134,11 +134,11 @@ class TextPipeline:
         if token.word_type == WordType.UNDEFINED:
             # Two segments to remove '.'
             # dance.
-            # dr.albert
+            # dr. albert
             # Fix for spacy issue defined above.
-            pos = string.token.source.index('.')
-            if pos == len(token.source):
-                token_0 = Token(token.source[pos:])
+            pos = token.source.index('.')
+            if pos == len(token.source)-1:
+                token_0 = Token(token.source.replace('.', ''))
                 token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
                 token_1 = Token('.')
                 token_1.word_type = WordType.PUNCTUATION
