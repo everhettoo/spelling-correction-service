@@ -1,8 +1,11 @@
+from datetime import datetime, timedelta
 from unittest import TestCase
 import nltk
 import spacy
+from pandas.core.interchange.from_dataframe import primitive_column_to_ndarray
 from textblob import TextBlob
 
+import utils.duration
 
 text1 = "I can't sing'"
 text2 = "that is jack's cat'"
@@ -28,8 +31,14 @@ class Test(TestCase):
             print(d.text)
 
     def test_tb(self):
-        tokens = TextBlob(text1).tokens
-        print("tokens:", tokens)
+        # a = datetime.now().time()
+        # b = datetime.now().time()
+        # c =timedelta(b.second-a.second)
+        # print(b - a)
+
+        print(utils.duration.diff_seconds(datetime.now()))
+        # tokens = TextBlob(text1).tokens
+        # print("tokens:", tokens)
 
 
         # for ent in doc.ents:

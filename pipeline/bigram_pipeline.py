@@ -13,11 +13,13 @@ reload(rx)
 
 nltk.download('punkt')  # Ensure NLTK tokenizer is available
 
+
 class BigramPipeline:
     def __init__(self, model_path="data/bigram_freq.pkl"):
         self.err = False
         self.err_msg = ''
-        self.model_path = model_path if os.path.exists(model_path) and os.access(model_path, os.W_OK) else "data/bigram_freq.pkl"
+        self.model_path = model_path if os.path.exists(model_path) and os.access(model_path,
+                                                                                 os.W_OK) else "data/bigram_freq.pkl"
         self.model = self.load_model()
 
     def load_model(self):
@@ -102,7 +104,7 @@ class BigramPipeline:
                     self.model[w1][w2] += 1
             # save the new bigrams model into physical file
             self.save_model()
-            print(self.load_model())
+            # print(self.load_model())
         except Exception as e:
             self.err = True
             self.err_msg = str(e)
@@ -114,7 +116,7 @@ class BigramPipeline:
         for key in suggestions:
             suggestion = suggestions[key].lower()
             rank = self.model.get(previous_word, {}).get(suggestion, 0)  # Avoid KeyError
-            print(rank)
+            # print(rank)
             if rank not in ranking:
                 ranking[rank] = []
             ranking[rank].append(suggestion)

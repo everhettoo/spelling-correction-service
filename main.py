@@ -1,14 +1,15 @@
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from contextlib import asynccontextmanager
 
 from app_config import Configuration
 from models.document import Document
-from pipeline.text_pipeline import TextPipeline
 from pipeline.bigram_pipeline import BigramPipeline
-from datetime import datetime
+from pipeline.text_pipeline import TextPipeline
+from utils.duration import Timer
 
 # Import app config.
 config = Configuration()
@@ -16,14 +17,17 @@ config = Configuration()
 # Declare BigramPipeline globally
 bigram_processor = None
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global bigram_processor
+
+    print(f'[Service] - initializing ...')
     bigram_processor = BigramPipeline()  # Load once at startup
-    print("BigramPipeline initialized")
     yield
     bigram_processor = None  # Cleanup on shutdown
-    print("BigramPipeline cleared")
+    print(f'[Service] - shutting down ...')
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -39,30 +43,28 @@ app.add_middleware(
 class InputText(BaseModel):
     input_text: str
 
+
 @app.post("/review")
 async def review_text(data: InputText):
-    """Processes input text using text pipeline and bigram model."""
+    """Processes input text using text pipeline and bi-gram model."""
     global bigram_processor
+    timer = Timer()
 
-    if not bigram_processor:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="BigramPipeline not initialized")
-
-    current_time = datetime.now().time()
-    print("text start Time:", current_time)
+    print(f'[Service] - received request ...')
+    timer.start()
+    print(f'[Service] - text preprocessing ...')
     doc = Document(data.input_text)
     processor = TextPipeline(config)
     processor.execute_asc_pipeline(doc)
-    current_time = datetime.now().time()
-    print("text end Time:", current_time)
+    print(f'[Service] - text preprocessing completed in {timer.stop()} seconds.')
 
     if processor.err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=processor.err_msg)
 
-    current_time = datetime.now().time()
-    print("bigrams start Time:", current_time)
+    print(f'[Service] - bi-gram processing ...')
+    timer.start()
     doc = bigram_processor.check_sentence(doc)
-    current_time = datetime.now().time()
-    print("bigrams end Time:", current_time)
+    print(f'[Service] - bi-gram processing completed in {timer.stop()} seconds.')
 
     if bigram_processor.err:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=bigram_processor.err_msg)
@@ -76,7 +78,7 @@ async def update_bi_grams_model(data: InputText):
     global bigram_processor
 
     if not bigram_processor:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="BigramPipeline not initialized")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Bi-gramPipeline not initialized")
 
     bigram_processor.update_bigrams(data.input_text)
     return {"result": "N-gram model updated"}

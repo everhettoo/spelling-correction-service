@@ -1,16 +1,15 @@
 # This module handles:
 # 1. language encoding and language detection
 # 2. word tokenization (word segmentation)
+# 3. Noisy-channel
+# 4. Edit-distance
 import string
 
 import chardet
 import spacy
-
 from nltk import edit_distance
 from nltk.corpus import stopwords, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize, sent_tokenize
-from noisy_channel.proba_distributor import ProbaDistributor
-from noisy_channel.channel_v1 import ChannelV1, datafile
 from spacy.lang.en import English
 from spacy.tokenizer import Tokenizer
 
@@ -20,6 +19,9 @@ from models.paragraph import Paragraph
 from models.sentence import Sentence
 from models.token import Token
 from models.types import WordType
+from noisy_channel.channel_v1 import ChannelV1, datafile
+from noisy_channel.proba_distributor import ProbaDistributor
+from utils.duration import Timer
 
 
 class TextPipeline:
@@ -27,10 +29,7 @@ class TextPipeline:
         self.err = False
         self.err_msg = ''
         self.stop_words = set(stopwords.words('english'))
-        # words.fileids() --> ['en', 'en-basic']
-        # self.corpus = set([item for item in words.words('en-basic') if item not in stopwords.words('english')])
-        # corpus_dir = config.config_values['corpus_medical']
-        # self.corpus = PlaintextCorpusReader(config.config_values['corpus_medical_dir'], '.*\.txt')
+
         self.corpus = PlaintextCorpusReader(config.config_values['corpus_medical_dir'],
                                             config.config_values['corpus_medical_name'])
         self.corpus = self.corpus.words()
@@ -40,8 +39,6 @@ class TextPipeline:
                                     "I'm": "I am", "they've": "they have", "he's": "he is", "she'd": "she would",
                                     "we'll": "we will"}
 
-        # Build noisy-channel model.
-        # TODO: Read paths from config.
         self.p_lang_model = ProbaDistributor(datafile(config.config_values['noisy_channel_word_file']))
         self.p_error_model = ProbaDistributor(datafile(config.config_values['noisy_channel_edit_file']))
         self.channel = ChannelV1(lang_model=self.p_lang_model,
@@ -58,37 +55,51 @@ class TextPipeline:
             self.err_msg = str(e)
 
     def parse_doc(self, doc: Document):
+        timer_para = Timer()
         doc.paragraphs = []
         paragraph_list = doc.input_text.split("\r\n")
+
+        timer_para.start()
+        print(f'[Text-Processor] - processing {len(paragraph_list)} paragraphs...')
+
         for p in paragraph_list:
             # Process paragraph
             paragraph = Paragraph()
             sentence_list = sent_tokenize(p)
+
+            timer_sen = Timer()
+            timer_sen.start()
+            print(f'[Text-Processor] - processing {len(sentence_list)} sentences...')
             for s in sentence_list:
                 # Process sentence
                 sentence = Sentence()
                 tokenizer = Tokenizer(self.nlp.vocab)
                 word_list = tokenizer(s)
 
+                timer_token = Timer()
+                timer_token.start()
+                print(f'[Text-Processor] - processing {len(word_list)} tokens...')
                 for word in word_list:
                     # Parse token to relevant types:
                     token = Token(str(word))
                     tokens = self.__parse_token(token)
                     sentence.tokens.extend(tokens)
 
-                print('completed token parsing ...')
-
                 for token in sentence.tokens:
                     # Process token.
                     self.__review_words(token)
 
-                print('completed token review ...')
+                print(f'[Text-Processor] - completed tokens in {timer_token.stop()} seconds.')
 
                 # Add processed sentence (+tokens) into a new paragraph.
                 paragraph.sentences.append(sentence)
 
+            print(f'[Text-Processor] - completed sentences in {timer_sen.stop()} seconds.')
+
             # Add the new paragraph into document.
             doc.paragraphs.append(paragraph)
+
+        print(f'[Text-Processor] - completed paragraphs in {timer_para.stop()} seconds.')
 
     # TODO: check it is required or not
     def __detect_language_when_english(self, doc: Document):
@@ -185,5 +196,6 @@ class TextPipeline:
 
         if token.word_type == WordType.NON_WORD or token.word_type == WordType.WORD:
             c = self.channel.correct(token.source.lower())
+            print(c)
             if c not in token.suggestions.values() and c != token.source.lower():
                 token.suggestions[i] = c
