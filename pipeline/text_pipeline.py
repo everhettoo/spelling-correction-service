@@ -129,7 +129,7 @@ class TextPipeline:
     def __parse_token(self, token: Token) -> list[Token]:
         token_list = []
         # TODO: This need to configured in the spacy rule for tokenization.
-        if "." in token.source.lower():
+        if "." in token.source.lower() or "," in token.source.lower():
             token.word_type = WordType.UNDEFINED
         elif token.source in self.common_contractions.keys():
             token.word_type = WordType.CONTRACTION
@@ -149,18 +149,24 @@ class TextPipeline:
             # dance.
             # dr. albert
             # Fix for spacy issue defined above.
-            pos = token.source.index('.')
-            if pos == len(token.source)-1:
-                token_0 = Token(token.source.replace('.', ''))
-                token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
-                token_1 = Token('.')
-                token_1.word_type = WordType.PUNCTUATION
-                token_list.append(token_0)
-                token_list.append(token_1)
-            else:
-                # A name can be treated a single word.
-                token.word_type = WordType.NON_WORD
-                token_list.append(token)
+            # pos = token.source.index('.')
+            # if pos == len(token.source) - 1:
+            #     token_0 = Token(token.source.replace('.', ''))
+            #     token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
+            #     token_1 = Token('.')
+            #     token_1.word_type = WordType.PUNCTUATION
+            #     token_list.append(token_0)
+            #     token_list.append(token_1)
+            # else:
+            #     # A name can be treated a single word.
+            #     token.word_type = WordType.NON_WORD
+            #     token_list.append(token)
+            # Comma (,)
+            if chr(44) in token.source:
+                self.custom_symbol_handling(token, token_list, chr(44))
+            #  Period (.)
+            if chr(46) in token.source:
+                self.custom_symbol_handling(token, token_list, chr(46))
         elif token.word_type == WordType.APOSTROPHE:
             # There must be two segments.
             word_list = token.source.split("'")
@@ -180,22 +186,44 @@ class TextPipeline:
 
         return token_list
 
+    def custom_symbol_handling(self, token: Token, token_list, c):
+        pos = token.source.index(c)
+        if pos == len(token.source) - 1:
+            token_0 = Token(token.source.replace(c, ''))
+            token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
+            token_1 = Token(c)
+            token_1.word_type = WordType.PUNCTUATION
+            token_list.append(token_0)
+            token_list.append(token_1)
+        else:
+            # A name can be treated a single word.
+            token.word_type = WordType.NON_WORD
+            token_list.append(token)
+
     def __review_words(self, token: Token):
         token.suggestions = dict()
 
-        i = 0
         if token.word_type == WordType.NON_WORD:
-            for w in self.corpus:
-                if w in token.suggestions.values():
-                    continue
+            self.__edit_distance(token)
 
-                m = edit_distance(token.source.lower(), w)
-                if m == 1:
-                    token.suggestions[i] = w
-                    i = i + 1
+        # Removing NON-WORD, only REAL-WORD checked in noisy-channel as per documentation.
+        if token.word_type == WordType.WORD:
+            self.__noisy_channel(token)
 
-        if token.word_type == WordType.NON_WORD or token.word_type == WordType.WORD:
-            c = self.channel.correct(token.source.lower())
-            print(c)
-            if c not in token.suggestions.values() and c != token.source.lower():
-                token.suggestions[i] = c
+    def __edit_distance(self, token: Token):
+        i = 0
+        for w in self.corpus:
+            if w in token.suggestions.values():
+                continue
+
+            m = edit_distance(token.source.lower(), w)
+            if m == 1:
+                token.suggestions[i] = w
+                i = i + 1
+
+    def __noisy_channel(self, token: Token):
+        i = len(token.suggestions)
+        c = self.channel.correct(token.source.lower())
+        # print(c)
+        if c not in token.suggestions.values() and c != token.source.lower():
+            token.suggestions[i] = c

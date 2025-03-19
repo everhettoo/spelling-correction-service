@@ -45,7 +45,7 @@ class InputText(BaseModel):
 
 
 @app.post("/review")
-async def review_text(data: InputText):
+def review_text(data: InputText):
     """Processes input text using text pipeline and bi-gram model."""
     global bigram_processor
     timer = Timer()
