@@ -62,9 +62,20 @@ class Test(TestCase):
         actual = self.pipeline._TextPipeline__detect_language_when_english(doc)
         self.assertFalse(actual)
 
+    def test_parse_token(self):
+        token1 = Token('diabetis')
+
+        # Test the private method.
+        self.pipeline._TextPipeline__parse_token(token1)
+        self.assertEqual(WordType.NON_WORD, token1.word_type)
+
+        self.pipeline._TextPipeline__review_words(token1)
+        self.assertEqual(WordType.NON_WORD, token1.word_type)
+        self.assertEqual(2, len(token1.suggestions))
+
     def test_review_words_when_is_correct_word(self):
         # Doc is not required, token is sufficient.
-        token = Token('symptom')
+        token = Token('beta')
         token.word_type = WordType.WORD
 
         # Test the private method.

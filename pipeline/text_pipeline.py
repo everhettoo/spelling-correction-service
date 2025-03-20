@@ -213,5 +213,8 @@ class TextPipeline:
         i = len(token.suggestions)
         c = self.channel.correct(token.source.lower())
         # print(c)
-        if c not in token.suggestions.values() and c != token.source.lower():
+        # if c not in token.suggestions.values() and c != token.source.lower():
+        # This means, two different words in the corpus identified through edits.
+        if c != token.source.lower():
             token.suggestions[i] = c
+            token.type = WordType.REAL_WORD

@@ -11,3 +11,4 @@ class WordType(Enum):
     STOP_WORD = 4
     APOSTROPHE = 5
     CONTRACTION = 6
+    REAL_WORD = 7
