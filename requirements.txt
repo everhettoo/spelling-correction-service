@@ -8,6 +8,5 @@ jupyter
 ipykernel
 wordcloud
 matplotlib
-scikit-learn
 nlppreprocess
 spacy
