@@ -10,7 +10,6 @@ import spacy
 from nltk import edit_distance
 from nltk.corpus import stopwords, PlaintextCorpusReader
 from nltk.tokenize import word_tokenize, sent_tokenize
-from spacy.lang.en import English
 from spacy.tokenizer import Tokenizer
 
 from app_config import Configuration
@@ -33,8 +32,9 @@ class TextPipeline:
         self.corpus = PlaintextCorpusReader(config.config_values['corpus_medical_dir'],
                                             config.config_values['corpus_medical_name'])
         self.corpus = self.corpus.words()
-        self.spacy_nlp = spacy.load("en_core_web_sm")
-        self.nlp = English()
+        # self.spacy_nlp = spacy.load("en_core_web_sm")
+        self.nlp = spacy.load("en_core_web_sm")
+        # self.nlp = English()
         self.common_contractions = {"can't": "cannot", "won't": "will not", "isn't": "is not", "you're": "you are",
                                     "I'm": "I am", "they've": "they have", "he's": "he is", "she'd": "she would",
                                     "we'll": "we will"}
@@ -145,22 +145,10 @@ class TextPipeline:
             token.word_type = WordType.NON_WORD
 
         if token.word_type == WordType.UNDEFINED:
-            # Two segments to remove '.'
-            # dance.
-            # dr. albert
-            # Fix for spacy issue defined above.
-            # pos = token.source.index('.')
-            # if pos == len(token.source) - 1:
-            #     token_0 = Token(token.source.replace('.', ''))
-            #     token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
-            #     token_1 = Token('.')
-            #     token_1.word_type = WordType.PUNCTUATION
-            #     token_list.append(token_0)
-            #     token_list.append(token_1)
-            # else:
-            #     # A name can be treated a single word.
-            #     token.word_type = WordType.NON_WORD
-            #     token_list.append(token)
+            # TODO: This custom handling for '.' and ',' is a quick-fix for 'symptom+,' error.
+            #  Two segments to remove '.' and ','
+            # E.g. dance. and dr. albert
+            # E.g. symptom,
             # Comma (,)
             if chr(44) in token.source:
                 self.custom_symbol_handling(token, token_list, chr(44))
