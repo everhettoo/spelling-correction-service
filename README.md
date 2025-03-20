@@ -13,8 +13,8 @@ Pre-requisite: Python was installed and configured in the local machine.
 - activate the virtual environment (windows): `venv\Scripts\activate`
 - install required libraries: `pip install -r requirements.txt`
 - download spacy corpus: `python -m spacy download en`
-- run the `1-preprocess-corpus.ipynb` to create corpus in `corpus/medical/medical.txt`
-- run the `2-preprocess-corpus-freq.ipynb` to create corpus in `corpus/medical_freq/medical_freq.tsv`
+- run the `1-build-corpus.ipynb` to create corpus in `corpus/medical/medical.txt`
+- run the `2-build-corpus-freq.ipynb` to create corpus in `corpus/medical_freq/medical_freq.tsv`
 - run the `3-build-bigram-model.ipynb` to create corpus in `data/bigram_freq.pkl`
 - run the service: `python 4-main.py`
 - to read the service docs goto: http://localhost:8000/docs
