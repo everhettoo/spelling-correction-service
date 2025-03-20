@@ -3,6 +3,7 @@ from unittest import TestCase
 from app_config import Configuration
 from models.document import Document
 from models.token import Token
+from models.types import WordType
 from pipeline import text_pipeline
 from tests import test_data
 
@@ -63,7 +64,8 @@ class Test(TestCase):
 
     def test_review_words_when_is_correct_word(self):
         # Doc is not required, token is sufficient.
-        token = Token('hello')
+        token = Token('symptom')
+        token.word_type = WordType.WORD
 
         # Test the private method.
         self.pipeline._TextPipeline__review_words(token)
@@ -72,8 +74,10 @@ class Test(TestCase):
     def test_review_words_when_is_non_word(self):
         # Doc is not required, token is sufficient.
         # suggested: yellow, hollow, hello
-        token = Token('hellow')
+        token = Token('glacoma')
+        token.word_type = WordType.NON_WORD
 
         # Test the private method.
         self.pipeline._TextPipeline__review_words(token)
-        self.assertEqual(len(token.suggestions), 3)
+        self.assertEqual(len(token.suggestions), 1)
+        self.assertEqual('glaucoma',token.suggestions[0])
