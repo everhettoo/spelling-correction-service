@@ -20,6 +20,7 @@ from models.token import Token
 from models.types import WordType
 from noisy_channel.channel_v1 import ChannelV1, datafile
 from noisy_channel.proba_distributor import ProbaDistributor
+from pipeline.bigram_pipeline import BigramPipeline
 from utils.duration import Timer
 
 
@@ -46,10 +47,16 @@ class TextPipeline:
                                  spell_error=(1. / 20.),
                                  alphabet='abcdefghijklmnopqrstuvwxyz')
 
+        # Bi-gram processor for checking language model.
+        self.bigram = BigramPipeline()
+
     def execute_asc_pipeline(self, doc: Document):
         try:
-            # self.__detect_language_when_english()
+            self.__detect_language_when_english(doc)
             self.parse_doc(doc)
+            self.bigram.verify_error_type(doc, self.corpus)
+            self.review_doc(doc)
+            self.bigram.check_sentence(doc)
         except Exception as e:
             self.err = True
             self.err_msg = str(e)
@@ -60,7 +67,7 @@ class TextPipeline:
         paragraph_list = doc.input_text.split("\r\n")
 
         timer_para.start()
-        print(f'[Text-Processor] - processing {len(paragraph_list)} paragraphs...')
+        print(f'[Text-Processor:Parse] - processing {len(paragraph_list)} paragraphs...')
 
         for p in paragraph_list:
             # Process paragraph
@@ -69,7 +76,7 @@ class TextPipeline:
 
             timer_sen = Timer()
             timer_sen.start()
-            print(f'[Text-Processor] - processing {len(sentence_list)} sentences...')
+            print(f'[Text-Processor:Parse] - processing {len(sentence_list)} sentences...')
             for s in sentence_list:
                 # Process sentence
                 sentence = Sentence()
@@ -78,28 +85,38 @@ class TextPipeline:
 
                 timer_token = Timer()
                 timer_token.start()
-                print(f'[Text-Processor] - processing {len(word_list)} tokens...')
+                print(f'[Text-Processor:Parse] - processing {len(word_list)} tokens...')
                 for word in word_list:
                     # Parse token to relevant types:
                     token = Token(str(word))
                     tokens = self.__parse_token(token)
                     sentence.tokens.extend(tokens)
 
-                for token in sentence.tokens:
-                    # Process token.
-                    self.__review_words(token)
-
-                print(f'[Text-Processor] - completed tokens in {timer_token.stop()} seconds.')
-
+                print(f'[Text-Processor:Parse] - completed tokens in {timer_token.stop()} seconds.')
                 # Add processed sentence (+tokens) into a new paragraph.
                 paragraph.sentences.append(sentence)
 
-            print(f'[Text-Processor] - completed sentences in {timer_sen.stop()} seconds.')
-
+            print(f'[Text-Processor:Parse] - completed sentences in {timer_sen.stop()} seconds.')
             # Add the new paragraph into document.
             doc.paragraphs.append(paragraph)
 
-        print(f'[Text-Processor] - completed paragraphs in {timer_para.stop()} seconds.')
+        print(f'[Text-Processor:Parse] - completed paragraphs in {timer_para.stop()} seconds.')
+
+    def review_doc(self, doc: Document):
+        timer_para = Timer()
+        timer_para.start()
+        print(f'[Text-Processor:Review] - processing paragraphs...')
+
+        for paragraph in doc.paragraphs:
+            for sentence in paragraph.sentences:
+                timer_token = Timer()
+                timer_token.start()
+                print(f'[Text-Processor:Review] - processing {len(sentence.tokens)} tokens...')
+                for token in sentence.tokens:
+                    self.__review_words(token)
+
+                print(f'[Text-Processor:Review] - completed tokens in {timer_token.stop()} seconds.')
+        print(f'[Text-Processor:Review] - completed paragraphs in {timer_para.stop()} seconds.')
 
     # TODO: check it is required or not
     def __detect_language_when_english(self, doc: Document):
@@ -139,10 +156,8 @@ class TextPipeline:
             token.word_type = WordType.PUNCTUATION
         elif token.source.lower() in self.stop_words:
             token.word_type = WordType.STOP_WORD
-        elif token.source.lower() in self.corpus:
-            token.word_type = WordType.WORD
         else:
-            token.word_type = WordType.NON_WORD
+            token.word_type = WordType.WORD
 
         if token.word_type == WordType.UNDEFINED:
             # TODO: This custom handling for '.' and ',' is a quick-fix for 'symptom+,' error.
@@ -195,7 +210,7 @@ class TextPipeline:
             self.__edit_distance(token)
 
         # Removing NON-WORD, only REAL-WORD checked in noisy-channel as per documentation.
-        if token.word_type == WordType.WORD:
+        if token.word_type == WordType.REAL_WORD:
             self.__noisy_channel(token)
 
     def __edit_distance(self, token: Token):
@@ -217,4 +232,4 @@ class TextPipeline:
         # This means, two different words in the corpus identified through edits.
         if c != token.source.lower():
             token.suggestions[i] = c
-            token.type = WordType.REAL_WORD
+            # token.type = WordType.REAL_WORD

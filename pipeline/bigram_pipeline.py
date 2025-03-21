@@ -1,6 +1,9 @@
 import nltk
 import os
 import pickle
+
+from nltk.corpus import PlaintextCorpusReader
+
 import utils.regex as rx
 
 from collections import defaultdict, Counter
@@ -8,6 +11,8 @@ from importlib import reload
 from nlppreprocess import NLP
 from nltk import word_tokenize, sent_tokenize, bigrams
 from models.document import Document
+from models.types import WordType
+from utils.duration import Timer
 
 reload(rx)
 
@@ -132,10 +137,14 @@ class BigramPipeline:
         return my_dict
 
     def check_sentence(self, doc: Document):
+        timer = Timer()
+        timer.start()
+
         is_update = True
-        # print("""Checks if a sentence follows the trained n-gram model using structured input.""")
         input_text = doc.input_text
         paragraphs = doc.paragraphs
+
+        print(f'[Bigram-Processor:Ranking] - processing {len(paragraphs)} paragraphs...')
         # preprocess the input text without edit distance
         clean_text = self.clean_text(input_text)
         clean_sentences = self.convert2sentences(clean_text)
@@ -160,7 +169,35 @@ class BigramPipeline:
         if is_update:
             self.update_bigrams(input_text)
         doc.input_text = ''
-        return {
-            "doc": doc,  # Return original structure
-            "message": "Sentence consistency checked.",
-        }
+
+        print(f'[Bigram-Processor:Ranking] - completed paragraphs in {timer.stop()} seconds.')
+
+    def verify_error_type(self, doc: Document, corpus: PlaintextCorpusReader):
+        input_text = doc.input_text
+        paragraphs = doc.paragraphs
+        # preprocess the input text without edit distance
+        clean_text = self.clean_text(input_text)
+        clean_sentences = self.convert2sentences(clean_text)
+        i = 0
+        j = 0
+        for clean_sentence in clean_sentences:
+            # split the sentence to tokens
+            tokens = self.tokenize(clean_sentence.lower())
+            ed_sentences = paragraphs[i].sentences
+            ed_tokens = ed_sentences[j].tokens
+            previous_token = '<s>'
+            for token in tokens:
+                for ed_token in ed_tokens:
+                    if ed_token.source == token:
+                        proba = self.model.get(previous_token, {}).get(ed_token.source, 0)
+                        if proba == 0:
+                            if ed_token.source in corpus:
+                                ed_token.word_type = WordType.REAL_WORD
+                            else:
+                                ed_token.word_type = WordType.NON_WORD
+
+                previous_token = token
+            j += 1
+            if len(ed_sentences) == j:
+                i += 1
+                j = 0
