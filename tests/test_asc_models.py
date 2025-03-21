@@ -35,7 +35,7 @@ class Test(TestCase):
         self.pipeline.parse_doc(doc)
 
         # Now, the marking on spelling error type applied.
-        self.bigram.verify_error_type(doc, self.pipeline.corpus)
+        self.bigram.verify_error_type(doc, self.pipeline.corpus, self.pipeline.stop_words)
         self.assert_token_type(doc, data)
 
         # Now, perform edit-distance on non-word and noisy-channel on word,
@@ -60,7 +60,7 @@ class Test(TestCase):
         self.pipeline.parse_doc(doc)
 
         # Now, the marking on spelling error type applied.
-        self.bigram.verify_error_type(doc, self.pipeline.corpus)
+        self.bigram.verify_error_type(doc, self.pipeline.corpus, self.pipeline.stop_words)
         self.assert_token_type(doc, data)
 
         # Now, perform edit-distance on non-word and noisy-channel on word,

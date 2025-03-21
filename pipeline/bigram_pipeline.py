@@ -172,7 +172,7 @@ class BigramPipeline:
 
         print(f'[Bigram-Processor:Ranking] - completed paragraphs in {timer.stop()} seconds.')
 
-    def verify_error_type(self, doc: Document, corpus: PlaintextCorpusReader):
+    def verify_error_type(self, doc: Document, corpus: PlaintextCorpusReader, stop_words: set[str]):
         input_text = doc.input_text
         paragraphs = doc.paragraphs
         # preprocess the input text without edit distance
@@ -191,10 +191,12 @@ class BigramPipeline:
                     if ed_token.source == token:
                         proba = self.model.get(previous_token, {}).get(ed_token.source, 0)
                         if proba == 0:
-                            if ed_token.source in corpus:
-                                ed_token.word_type = WordType.REAL_WORD
-                            else:
-                                ed_token.word_type = WordType.NON_WORD
+                            # TODO: Not sure why stop words are flowing in.
+                            if ed_token.source not in stop_words:
+                                if ed_token.source in corpus:
+                                    ed_token.word_type = WordType.REAL_WORD
+                                else:
+                                    ed_token.word_type = WordType.NON_WORD
 
                 previous_token = token
             j += 1

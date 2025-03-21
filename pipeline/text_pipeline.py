@@ -54,7 +54,7 @@ class TextPipeline:
         try:
             self.__detect_language_when_english(doc)
             self.parse_doc(doc)
-            self.bigram.verify_error_type(doc, self.corpus)
+            self.bigram.verify_error_type(doc, self.corpus, self.stop_words)
             self.review_doc(doc)
             self.bigram.check_sentence(doc)
         except Exception as e:
@@ -193,7 +193,9 @@ class TextPipeline:
         pos = token.source.index(c)
         if pos == len(token.source) - 1:
             token_0 = Token(token.source.replace(c, ''))
-            token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
+            # TODO: Marking or non-word and real-word should only happen in n-gram.check_error_type()
+            # token_0.word_type = WordType.WORD if token_0.source in self.corpus else WordType.NON_WORD
+            token_0.word_type = WordType.STOP_WORD if token_0.source in self.stop_words else WordType.WORD
             token_1 = Token(c)
             token_1.word_type = WordType.PUNCTUATION
             token_list.append(token_0)

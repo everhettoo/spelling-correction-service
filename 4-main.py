@@ -16,8 +16,8 @@ config = Configuration()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(f'[Service] - initializing ...')
     # TODO: If any config needs initialization.
+    print(f'[Service] - initialized.')
     yield
     # TODO: If any config needs de-initialization.
     print(f'[Service] - shutting down ...')
