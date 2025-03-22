@@ -140,7 +140,7 @@ class BigramPipeline:
         timer = Timer()
         timer.start()
 
-        is_update = True
+        # is_update = True
         input_text = doc.input_text
         paragraphs = doc.paragraphs
 
@@ -160,14 +160,15 @@ class BigramPipeline:
                 for ed_token in ed_tokens:
                     if ed_token.source == token and ed_token.suggestions:
                         ed_token.suggestions = self.rank_suggestions(previous_token, ed_token.suggestions)
-                        is_update = False
+                        # is_update = False
                 previous_token = token
             j += 1
             if len(ed_sentences) == j:
                 i += 1
                 j = 0
-        if is_update:
-            self.update_bigrams(input_text)
+        # TODO: Removing update safely (not used in NB during building). If not, the model is keep learning wrong context.
+        # if is_update:
+        # self.update_bigrams(input_text)
         doc.input_text = ''
 
         print(f'[Bigram-Processor:Ranking] - completed paragraphs in {timer.stop()} seconds.')
